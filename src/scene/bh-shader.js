@@ -77,6 +77,15 @@ void ksGeom(vec3 x, float a, out float r, out float f, out vec3 l, out vec3 df, 
   dl = mat3(dlx, dly, dlz); // dl[i] 는 i 번째 열 = (∂l_x/∂x_i, ∂l_y/∂x_i, ∂l_z/∂x_i)
 }
 
+// f, l 만 (도함수 없이) — 종료 판정용
+void ksFL(vec3 x, float a, out float r, out float f, out vec3 l){
+  float rho2 = dot(x,x); float b = rho2 - a*a;
+  float S = sqrt(b*b + 4.0*a*a*x.z*x.z);
+  float r2 = 0.5*(b + S); r = sqrt(r2);
+  float d = r2 + a*a;
+  f = 2.0*r2*r/(r2*r2 + a*a*x.z*x.z);
+  l = vec3((r*x.x + a*x.y)/d, (r*x.y - a*x.x)/d, x.z/r);
+}
 // 해밀턴 방정식. p = (p_t, p_x, p_y, p_z) 공변. l^μ = (−1, l_i).
 void deriv(vec3 x, vec4 p, float a, out vec3 dx, out vec3 dp){
   float r, f; vec3 l, df; mat3 dl;
@@ -227,6 +236,8 @@ void main(){
     float gap = r - rPlus;
     float h = 0.04 + 0.06*max(0.0, gap);
     h = min(h, max(0.0015, 0.25*abs(gap)));
+    // 운동량이 커지면(지평선 근처에서 발산) 좌표 이동량 h·|p| 가 목(throat)을 건너뛰지 않도록 스텝을 더 줄인다
+    h /= max(1.0, 0.5*length(p.yzw));
     if (uDiskOn > 0.5 && abs(x.z) < 1.0 + 0.1*r) h = min(h, 0.03 + 0.15*abs(x.z));
     if (uObjOn > 0.5){
       float dObj = length(x - uObjPos) - max(uObjAxes.x, uObjAxes.y);
@@ -266,6 +277,13 @@ void main(){
     steps = i;
     if (uCamOutside > 0.5 && rn < rPlus){ done = true; why = 1; break; }
     if (abs(rn - rPlus) < 0.004 || rn < rPlus*0.98 || (rn - rPlus < 0.5 && dot(p.yzw, p.yzw) > 1600.0)){ done = true; why = 1; break; }
+    // 지평선 근처에서 널 조건 H = ½ g^{μν}p_μp_ν = 0 이 깨지면 수치 오차로 튕긴 광선 → 검정
+    if (rn - rPlus < 0.5){
+      float rr, ff; vec3 ll; ksFL(x, uA, rr, ff, ll);
+      float lp = -p.x + dot(ll, p.yzw);
+      float H = 0.5*(-p.x*p.x + dot(p.yzw, p.yzw) - ff*lp*lp);
+      if (abs(H) > 2e-3*(p.x*p.x + dot(p.yzw, p.yzw))){ done = true; why = 1; break; }
+    }
     if (rn > uRFar && dot(x, p.yzw) > 0.0){           // 탈출: 하늘
       // 먼 곳에서 공간 방향 ≈ p⃗ (KS 는 점근적으로 평탄)
       col += trans*skyColor(normalize(p.yzw));
