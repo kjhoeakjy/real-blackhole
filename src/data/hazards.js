@@ -250,7 +250,7 @@ export function buildHazards(plan, choices = {}) {
   return ev;
 }
 
-function fmtTon(kg) { return kg < 1000 ? `${Math.round(kg).toLocaleString('en-US')} kg` : `${(kg / 1000).toPrecision(3).replace(/\.?0+$/, '')} t`; }
+function fmtTon(kg) { const t = kg / 1000; return kg < 1000 ? `${Math.round(kg).toLocaleString('en-US')} kg` : t < 100 ? `${t.toPrecision(3).replace(/\.?0+$/, '')} t` : `${Math.round(t).toLocaleString('en-US')} t`; }
 
 // 선택 결과 합산
 export function applyChoices(hazards, choices, ctxVals) {
