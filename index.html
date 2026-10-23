@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>우주 여행</title>
-<meta name="description" content="지금 이 순간의 실제 우주에서 출발지와 목적지를 고르면, 실제 탈것의 속도로 얼마나 걸리는지와 살아서 돌아올 확률을 계산해요. 블랙홀은 일반상대론 광선추적으로 봐요.">
+<meta name="description" content="지금 이 순간의 실제 우주 어딘가에서 눈을 뜨고, 시간이 흐르는 우주선 안에서 사건마다 선택하며 지구로 돌아오는 1인칭 게임. 거리·속도·위험은 전부 실제 측정값이에요.">
 <meta property="og:title" content="우주 여행">
-<meta property="og:description" content="실제 측정값으로 계산한 우주 여행 시간과 생존 확률">
+<meta property="og:description" content="실제 우주 어딘가에서 눈을 떠 지구로 돌아오는 1인칭 인생 게임">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,9 +36,22 @@
 
 <div id="scale"></div>
 <div id="hint"></div>
+<div id="voy-top" class="hidden"><div class="row"><span class="age num">—</span><span class="day num">—</span></div><div class="bar"><i></i></div><div class="sub"><span><em>지구까지</em><b class="num" id="c-dist">—</b></span><span><em>속도</em><b class="num" id="c-speed">—</b></span><span><em>지구 날짜</em><b class="num" id="c-earth">—</b></span><span><em>동료</em><b class="num" id="c-crew">—</b></span></div></div>
 <div id="cockpit" class="hidden"><div class="frame"></div>
-  <div class="hud"><div><span class="l">지구까지</span><span class="v num" id="c-dist">—</span></div><div><span class="l">경과 · 내 시계</span><span class="v num" id="c-time">—</span></div><div><span class="l">피폭</span><span class="v num" id="c-dose">—</span></div><div><span class="l">속도</span><span class="v num" id="c-p">—</span></div></div>
+  <div class="hud">
+    <div class="g" id="g-food"><span class="l">식량</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-water"><span class="l">물</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-o2"><span class="l">산소</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-power"><span class="l">전력</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-hull"><span class="l">선체</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-health"><span class="l">몸</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-morale"><span class="l">마음</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+    <div class="g" id="g-dose"><span class="l">피폭</span><span class="v num">—</span><div class="bar"><i></i></div></div>
+  </div>
 </div>
+<div id="voy-ctl" class="hidden"></div>
+<div id="toast"></div>
+<div id="landing" class="hidden"><div class="sky"></div><div class="sun"></div><div class="ground"></div></div>
 <div id="card" class="hidden"></div>
 
 <div id="loading"><div class="ring"></div><div class="msg" id="loading-msg">자료를 불러오는 중</div></div>
