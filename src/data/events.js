@@ -211,11 +211,11 @@ export const EVENTS = [
     trigger: (v) => v.s.f >= v.s.nextCourse, once: null,
     options: [
       { label: '지금 보정한다', hint: '추진제를 조금 쓰지만 확실해요.',
-        go: (v) => { v.s.nextCourse += 0.45; return { text: '엔진을 12초 켰어요. 궤도는 다시 지구 위에 있어요.', fuel: -0.08 }; } },
+        go: (v) => { v.s.nextCourse = 2; return { text: '엔진을 12초 켰어요. 궤도는 다시 지구 위에 있어요.', fuel: -0.08 }; } },
       { label: '다음에 몰아서 한다', hint: '오차가 쌓이면 나중에 더 많이 써요. 재진입 각도에 영향이 남을 수 있어요.',
-        go: (v) => { v.s.nextCourse += 0.45; return chance(0.75) ? { text: '미뤘어요. 아직은 오차가 작아요.', navRisk: 0.1 } : { text: '미뤘더니 오차가 생각보다 커졌어요. 나중에 두 배를 썼어요.', fuel: -0.15, navRisk: 0.2 }; } },
+        go: (v) => { v.s.nextCourse = v.s.nextCourse < 0.6 ? 0.8 : 2; return chance(0.75) ? { text: '미뤘어요. 아직은 오차가 작아요.', navRisk: 0.1 } : { text: '미뤘더니 오차가 생각보다 커졌어요. 나중에 두 배를 썼어요.', fuel: -0.15, navRisk: 0.2 }; } },
       { label: '지구 관제에 계산을 맡긴다', when: (v) => !v.s.flags.noantenna && !v.s.flags.silence, hint: (v) => `관제소의 답은 ${fmtDelay(2 * v.commDelay())} 뒤에 와요.`,
-        go: (v) => { v.s.nextCourse += 0.45; const d = 2 * v.commDelay(); return d < 30 * DAY ? { text: `${fmtDelay(d)} 기다려 관제소 값으로 보정했어요. 내 계산보다 정확했어요.`, fuel: -0.06, delay: d } : { text: '답이 오기엔 너무 멀어요. 결국 직접 계산해 보정했어요.', fuel: -0.08 }; } },
+        go: (v) => { v.s.nextCourse = 2; const d = 2 * v.commDelay(); return d < 30 * DAY ? { text: `${fmtDelay(d)} 기다려 관제소 값으로 보정했어요. 내 계산보다 정확했어요.`, fuel: -0.06, delay: d } : { text: '답이 오기엔 너무 멀어요. 결국 직접 계산해 보정했어요.', fuel: -0.08 }; } },
     ],
   },
   {

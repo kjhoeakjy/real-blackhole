@@ -13,7 +13,7 @@ const R = Math.random;
 const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'water-retry', 'hib-offer2', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
 // 되풀이돼도 되는 사건 (부족 경고처럼 상황이 이어지는 것)
-const REPEATABLE = new Set(['oga-retry', 'water-retry', 'spe', 'course']);
+const REPEATABLE = new Set(['oga-retry', 'water-retry']);
 // 동료 후보: 이름·역할. 배에 오를 때 정원-1 명을 뽑는다
 const MATES = [['서하린', '의사'], ['강민준', '기관사'], ['오지우', '항법사'], ['레나 오카포', '식물학자'], ['토마스 레예스', '통신사'], ['박도윤', '조종사'], ['아이샤 라만', '물리학자'], ['이수아', '정비사'], ['사토 유키', '심리상담사'], ['정하람', '요리사'], ['마테오 비앙키', '지질학자'], ['한세영', '간호사'], ['니콜라 페트로프', '전기기사'], ['최은우', '생물학자'], ['마리암 하다드', '천문학자']];
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -123,7 +123,8 @@ export class Voyage {
     const seen = s.seen || (s.seen = {}), seenCat = s.seenCat || (s.seenCat = {});
     for (const e of EVENTS) {
       if (!e.rate || !ok(e) || (e.when && !e.when(this))) continue;
-      const rep = REPEATABLE.has(e.id) ? 1 : Math.pow(0.2, seen[e.id] || 0) * Math.pow(0.85, seenCat[e.cat] || 0);
+      if (!REPEATABLE.has(e.id) && (seen[e.id] || 0) >= 2) continue;   // 같은 사건은 한 항해에 최대 두 번
+      const rep = REPEATABLE.has(e.id) ? 1 : Math.pow(0.08, seen[e.id] || 0) * Math.pow(0.85, seenCat[e.cat] || 0);
       if (R() < e.rate(this) * rateMul * rep * dy) return this._raise(e);
     }
   }
