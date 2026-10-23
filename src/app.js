@@ -18,7 +18,7 @@ const ctx = {
     this.els.mapCanvas.classList.toggle('hidden', on);
     this.els.bhCanvas.classList.toggle('hidden', !on);
     this.els.labels.classList.toggle('hidden', on);
-    this.els.scale.classList.toggle('hidden', on);
+    if (on) this.els.scale.classList.add('hidden');   // 다시 보일지는 모드가 정한다
     if (on) { this.bh.resize(); this.bh.touch(); } else this.map._needsRender = true;
   },
 };

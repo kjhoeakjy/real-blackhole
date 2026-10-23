@@ -34,15 +34,9 @@ export const GALAXIES = [
   { id: 'm31', name: '안드로메다 은하', ra: 10.6847, dec: 41.2688, distPc: 761e3, note: '약 45억 년 뒤 우리은하와 합쳐져요' },
 ];
 
-// 탈것. real: 실제 기록, 아니면 가상의 속도.
+// 탈것: 출발할 때 셋 중 하나. real: 실제 기록, 아니면 가상의 속도.
 export const SHIPS = [
-  { id: 'apollo', name: '아폴로', v: 10.8e3, real: true, note: '1969년, 달로 가던 속도 10.8 km/s' },
-  { id: 'voyager', name: '보이저 1호', v: 17.0e3, real: true, note: '1977년 발사, 지금 태양계 밖 17 km/s' },
-  { id: 'parker', name: '파커 태양 탐사선', v: 191e3, real: true, note: '2024-12-24, 인류가 만든 가장 빠른 물체 191 km/s' },
-  { id: 'c01', name: '빛의 1 %', v: 0.01 * c, real: false, note: '가상. 핵융합 로켓 구상의 상한 근처' },
-  { id: 'c10', name: '빛의 10 %', v: 0.1 * c, real: false, note: '가상' },
-  { id: 'c20', name: '빛의 20 %', v: 0.2 * c, real: false, note: '가상. 브레이크스루 스타샷의 목표 (그램 단위 탐사체)' },
-  { id: 'c50', name: '빛의 50 %', v: 0.5 * c, real: false, note: '가상' },
-  { id: 'c90', name: '빛의 90 %', v: 0.9 * c, real: false, note: '가상' },
-  { id: 'c999', name: '빛의 99.9 %', v: 0.999 * c, real: false, note: '가상. 시간 지연이 뚜렷해요' },
+  { id: 'voyager', name: '보이저 급', v: 17.0e3, real: true, desc: '화학 로켓과 행성 중력 도움. 보이저 1호가 지금 내는 17 km/s.', fx: '실제 · 17 km/s' },
+  { id: 'parker', name: '파커 급', v: 191e3, real: true, desc: '인류가 만든 가장 빠른 물체, 파커 태양 탐사선의 2024-12-24 최고 속도 191 km/s.', fx: '실제 · 191 km/s' },
+  { id: 'c20', name: '빛의 20 %', v: 0.2 * c, real: false, desc: '브레이크스루 스타샷이 그램 단위 탐사체로 노리는 속도. 사람을 태운 배로는 아직 가상이에요.', fx: '가상 · 60,000 km/s' },
 ];

@@ -415,6 +415,17 @@ export class UniverseMap {
     if (instant) { this.camera.position.copy(this._flyDir); this._dirV = this._flyDir.clone(); this.logDist = this.targetLogDist; this._flyDir = null; }
   }
   get distanceMeters() { return Math.pow(10, this.logDist); }
+  // 1인칭: 탈것 위치(미터)에서 target(미터)을 바라본다. 끌기 조작은 꺼진다
+  setFirstPerson(shipPos, target, instant = false) {
+    this.fp = true; this.controls.enabled = false; this.focusBody = null; this._flyDir = null;
+    const D = Math.max(2e7, shipPos.distanceTo(target));
+    const dir = shipPos.clone().sub(target).normalize();
+    this.targetLogDist = THREE.MathUtils.clamp(Math.log10(D), this.minLog, this.maxLog);
+    if (instant) { this.logDist = this.targetLogDist; this.focus.copy(target); this.focusTarget = null; this._dirV = dir; this.camera.position.copy(dir); }
+    else { this.focusTarget = target.clone(); this._fpDir = dir; }
+    this._needsRender = true;
+  }
+  exitFirstPerson() { this.fp = false; this.controls.enabled = true; this._fpDir = null; this._needsRender = true; }
 
   render(dt) {
     this.logDist += (this.targetLogDist - this.logDist) * Math.min(1, dt * 6);
@@ -426,6 +437,8 @@ export class UniverseMap {
       const nd = this._dirV.clone().lerp(this._flyDir, Math.min(1, dt * 5)).normalize();
       this.camera.position.copy(nd);
       if (nd.distanceTo(this._flyDir) < 0.002) this._flyDir = null;
+    } else if (this.fp) {
+      if (this._fpDir) { const nd = this._dirV.clone().lerp(this._fpDir, Math.min(1, dt * 4)).normalize(); this.camera.position.copy(nd); if (nd.distanceTo(this._fpDir) < 0.0005) { this.camera.position.copy(this._fpDir); this._fpDir = null; } }
     } else this.controls.update();
     const dir = this.camera.position.clone().normalize();
     this._dirV = dir;
@@ -433,7 +446,7 @@ export class UniverseMap {
     // 아무것도 안 움직이면 다시 그리지 않는다 (행성 위치 갱신·창 크기·이동 요청은 _needsRender 로 깨운다)
     const sig = [dir.x, dir.y, dir.z, this.logDist, this.focus.x, this.focus.y, this.focus.z];
     const same = this._sig && sig.every((v, i) => Math.abs(v - this._sig[i]) < 1e-9 * (1 + Math.abs(v)));
-    if (same && !this._needsRender && !this._flyDir && !this.focusBody && !this.focusTarget) { this._dir = dir; this._D = D; return; }
+    if (same && !this._needsRender && !this._flyDir && !this._fpDir && !this.focusBody && !this.focusTarget) { this._dir = dir; this._D = D; return; }
     this._sig = sig; this._needsRender = false;
     // 행성에 붙어 있을 때는 궤도선을 감춘다 (화면을 가로지르는 줄이 되므로)
     this._orbitFade = THREE.MathUtils.lerp(this._orbitFade ?? 1, this.focusBody ? 0 : 1, Math.min(1, dt * 4));

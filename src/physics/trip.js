@@ -47,7 +47,7 @@ export function planReturn({ distM, v, age, bh = null, mods = {} }) {
   const gamma = 1 / Math.sqrt(1 - beta * beta);
   const tEarth = (distM / v) * (1 + (mods.timeFrac || 0)) + (mods.timeAbs || 0);   // 지구 시계
   const tau = tEarth / gamma;                                                       // 여행자 시계 (멈춘 시간은 작아서 같이 나눔)
-  const dose = DOSE_RATE_SV_PER_YEAR * (tau / YEAR) + (mods.dose || 0);
+  const dose = DOSE_RATE_SV_PER_YEAR * (tau / YEAR) * (mods.doseFactor ?? 1) + (mods.dose || 0);
   const pLife = survivalProb(age, tau / YEAR);
   const pRad = radiationSurvival(dose);
   const bhRes = bh ? blackHoleSurvival(bh.massSolar, bh.chi, bh.rOverRg) : null;

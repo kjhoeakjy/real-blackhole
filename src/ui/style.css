@@ -199,7 +199,6 @@ details.refs li { margin: 2px 0; }
   #panel::before { content: ''; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--line-2); margin: 8px auto 0; }
   #scale { right: 8px; width: 120px; height: 36vh; top: 60px; transform: none; }
   #scale .tick { font-size: 10px; }
-  #card { left: 12px; right: 12px; width: auto; bottom: 56vh; }
   #drawer { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 70vh; border-radius: 16px 16px 0 0; transform: translateY(100%); }
   #hint { display: none; }
   #hud .tau { top: 60px; }
@@ -232,3 +231,48 @@ details.refs li { margin: 2px 0; }
 .ev .fx { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
 .ev.danger { border-color: rgba(233,106,91,.35); }
 .ev.ok { border-color: rgba(120,200,140,.35); }
+
+/* 1인칭 조종석 */
+#cockpit { position: fixed; inset: 0; z-index: 14; pointer-events: none; }
+#cockpit.hidden { display: none; }
+#cockpit .frame { position: absolute; inset: 0; box-shadow: inset 0 0 160px 40px rgba(0,0,0,.85), inset 0 0 40px 10px rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.04); }
+#cockpit .hud { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); display: flex; gap: 26px; padding: 10px 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(8,10,14,.78); }
+#cockpit .hud .l { display: block; font-size: 10px; letter-spacing: .12em; color: var(--text-3); text-transform: uppercase; }
+#cockpit .hud .v { display: block; font-size: 15px; margin-top: 2px; }
+/* 사건 카드 (화면 가운데) */
+#card { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 150px); overflow-y: auto; z-index: 18; border: 1px solid var(--line-2); border-radius: 16px; background: rgba(10,12,17,.94); padding: 20px 22px 18px; box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: cardIn .35s ease; }
+#card.hidden { display: none; }
+@keyframes cardIn { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+#card .step { font-size: 11px; letter-spacing: .14em; color: var(--accent); text-transform: uppercase; }
+#card .t { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; margin: 6px 0 8px; }
+#card .d { font-size: 13.5px; color: var(--text-2); line-height: 1.6; }
+#card .src { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+#card .opts { display: grid; gap: 8px; margin-top: 14px; }
+#card .opt { text-align: left; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.03); transition: all .15s; cursor: pointer; user-select: none; }
+#card .opt .row { display: flex; align-items: flex-start; gap: 10px; }
+#card .opt .row > div { flex: 1; min-width: 0; }
+#card .opt .q { flex: none; font-size: 11px; letter-spacing: .06em; color: var(--text-3); padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: transparent; cursor: pointer; margin-top: 2px; }
+#card .opt .q:hover { color: var(--text); border-color: rgba(255,255,255,.35); }
+#card .opt .hint { font-size: 12.5px; line-height: 1.55; color: var(--text-2); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+#card .opt .hint.hidden { display: none; }
+#card .opt:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.07); }
+#card .opt b { display: block; font-size: 14px; }
+#card .opt span { display: block; font-size: 12px; color: var(--text-3); margin-top: 2px; }
+#card .opt.danger b { color: #f0a090; }
+#card .result-p { font-size: 42px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; margin: 8px 0 4px; }
+#card .roll { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,.04); font-size: 14px; }
+#card .roll.win { color: var(--ok); } #card .roll.lose { color: #f0a090; }
+/* 여정 로그 */
+.log { list-style: none; margin: 0; padding: 0; }
+.log li { display: grid; grid-template-columns: 16px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+.log li:first-child { border-top: 0; }
+.log li i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 5px; }
+.log li.next i { background: transparent; border: 1px solid var(--line-2); }
+.log li .c { color: var(--text-3); font-size: 11.5px; }
+@media (max-width: 860px) {
+  #cockpit .hud { left: 12px; right: 12px; transform: none; justify-content: space-between; gap: 8px; padding: 8px 12px; bottom: 50px; }
+  #cockpit .hud .v { font-size: 12px; white-space: nowrap; }
+  #cockpit .hud .l { font-size: 9px; letter-spacing: .08em; }
+  #card { top: 58px; transform: translateX(-50%); max-height: calc(100vh - 58px - 125px); padding: 16px 16px 14px; }
+}
+.log li.lose i { background: #f0a090; }
