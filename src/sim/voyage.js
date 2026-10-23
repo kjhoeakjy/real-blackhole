@@ -12,6 +12,8 @@ const R = Math.random;
 // 동면 중에는 컴퓨터가 비상시에만 깨운다: 이 사건들만 온다
 const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'water-retry', 'hib-offer2', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
+// 되풀이돼도 되는 사건 (부족 경고처럼 상황이 이어지는 것)
+const REPEATABLE = new Set(['oga-retry', 'water-retry', 'spe', 'course']);
 // 동료 후보: 이름·역할. 배에 오를 때 정원-1 명을 뽑는다
 const MATES = [['서하린', '의사'], ['강민준', '기관사'], ['오지우', '항법사'], ['레나 오카포', '식물학자'], ['토마스 레예스', '통신사'], ['박도윤', '조종사'], ['아이샤 라만', '물리학자'], ['이수아', '정비사'], ['사토 유키', '심리상담사'], ['정하람', '요리사'], ['마테오 비앙키', '지질학자'], ['한세영', '간호사'], ['니콜라 페트로프', '전기기사'], ['최은우', '생물학자'], ['마리암 하다드', '천문학자']];
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -117,9 +119,12 @@ export class Voyage {
       if (e.trigger && ok(e) && (!e.once || !s.flags[e.once]) && e.trigger(this)) { if (e.once) s.flags[e.once] = true; return this._raise(e); }
     }
     if (s.tau - s.lastEventTau < cooldown) return;
+    // 같은 사건은 되풀이될수록 드물게 (5분의 1씩), 같은 분류도 조금씩 드물게. 새 사건이 먼저 나온다
+    const seen = s.seen || (s.seen = {}), seenCat = s.seenCat || (s.seenCat = {});
     for (const e of EVENTS) {
       if (!e.rate || !ok(e) || (e.when && !e.when(this))) continue;
-      if (R() < e.rate(this) * rateMul * dy) return this._raise(e);
+      const rep = REPEATABLE.has(e.id) ? 1 : Math.pow(0.2, seen[e.id] || 0) * Math.pow(0.85, seenCat[e.cat] || 0);
+      if (R() < e.rate(this) * rateMul * rep * dy) return this._raise(e);
     }
   }
   _raise(e) {
@@ -129,6 +134,7 @@ export class Voyage {
     const desc = (woke ? '캡슐이 나를 깨웠어요. 몸이 덜 풀린 채로 경고등을 봐요. ' : '') + e.desc(this);
     this.pending = { ev: e, woke, title: typeof e.title === 'function' ? e.title(this) : title, desc, options: opts.map((o) => ({ ...o, label: typeof o.label === 'function' ? o.label(this) : o.label, hint: typeof o.hint === 'function' ? o.hint(this) : o.hint })) };
     this.s.lastEventTau = this.s.tau; this.s.events++;
+    const seen = this.s.seen || (this.s.seen = {}), seenCat = this.s.seenCat || (this.s.seenCat = {}); seen[e.id] = (seen[e.id] || 0) + 1; seenCat[e.cat] = (seenCat[e.cat] || 0) + 1;
   }
   // 선택: 결과를 굴리고 효과를 적용한다
   choose(i) {
