@@ -58,8 +58,10 @@ const PIC = {
   sun: '<svg viewBox="0 0 160 100"><circle cx="40" cy="100" r="60" fill="#ffb347"/><circle cx="40" cy="100" r="70" fill="none" stroke="#ffd56b" stroke-width="2" opacity=".5"/><path d="M90 60q20-30 40-10" stroke="#ffd56b" stroke-width="3" fill="none"/></svg>',
 };
 const PIC_BY_ID = { abductors: 'saucer', traders: 'saucer', bigship: 'saucer', twin: 'saucer', 'window-face': 'alien', 'mate-memory': 'alien', dream: 'alien', stowaway: 'crew', pod: 'pod', derelict: 'pod', whale: 'alien', comet: 'comet', 's-comet': 'comet', oumuamua: 'rock', belt: 'rock', micro: 'rock', debris: 'rock', dust: 'rock', reentry: 'earth', seeds: 'plant', eco: 'plant', spider: 'plant', spe: 'sun', 'solar-ship': 'sun', artifact: 'alien', beacon: 'saucer', dyson: 'saucer' };
+const ALERT = new Set(['fire', 'air', 'water', 'power', 'rock']);
+const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const PIC_BY_CAT = { crew: 'crew', rock: 'rock', earth: 'earth', sun: 'sun', sf: 'alien' };
-const art = (cat, id = '') => `<div class="art">${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]] ? `<div class="pic">${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]]}</div>` : icon(cat)}<div class="dots">${Array.from({ length: 6 }, (_, i) => `<i style="left:${10 + i * 15}%;bottom:${5 + (i * 37) % 40}px;animation-delay:${-i * 1.1}s"></i>`).join('')}</div></div>`;
+const art = (cat, id = '') => `<div class="art"><div class="bg"></div>${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]] ? `<div class="pic">${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]]}</div>` : icon(cat)}<div class="dots">${Array.from({ length: 6 }, (_, i) => `<i style="left:${10 + i * 15}%;bottom:${5 + (i * 37) % 40}px;animation-delay:${-i * 1.1}s"></i>`).join('')}</div></div>`;
 const icon = (cat) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[cat] || ICON.nav}</svg>`;
 
 export class TripMode {
@@ -73,7 +75,7 @@ export class TripMode {
     this.toast = document.getElementById('toast');
     this.landing = document.getElementById('landing');
     this.ctl = document.getElementById('voy-ctl');
-    this.scene = document.getElementById('scene'); this.fx = document.getElementById('fx'); this.interior = document.getElementById('interior'); this.prologue = document.getElementById('prologue');
+    this.scene = document.getElementById('scene'); this.fx = document.getElementById('fx'); this.amb = document.getElementById('amb'); this.interior = document.getElementById('interior'); this.prologue = document.getElementById('prologue');
     this._wireCtl();
     window.addEventListener('resize', () => { if (this.sceneOn) this._drawScene(); });
   }
@@ -102,7 +104,8 @@ export class TripMode {
   _setup(fly) {
     this.state = 'setup'; this.voy = null; this.from = null; this.route = null; this.ship = null; this.bhLogR = 3;
     this.map.exitFirstPerson();
-    for (const e of [this.card, this.cockpit, this.top, this.ctl, this.landing, this.scene]) e.classList.add('hidden');
+    for (const e of [this.card, this.cockpit, this.top, this.ctl, this.landing, this.scene, this.amb]) e.classList.add('hidden');
+    this.cockpit.classList.remove('alert'); delete this.card.dataset.cat;
     this.landing.classList.remove('on'); this.scene.classList.remove('lift'); this.interior.classList.remove('on'); this.interior.classList.add('hidden'); this.sceneOn = false;
     this._prologue();
     this.ctx.els.scale.classList.remove('hidden');
@@ -152,6 +155,23 @@ export class TripMode {
     const t0 = performance.now(); cancelAnimationFrame(this._fxRaf);
     const loop = () => { const t = (performance.now() - t0) / 1000; const alive = drawFx(cv, name, t); if (alive) this._fxRaf = requestAnimationFrame(loop); else { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); cv.classList.add('hidden'); } };
     this._fxRaf = requestAnimationFrame(loop);
+  }
+  // 창밖: 앞으로 흐르는 먼지·별. 속도가 빠를수록 길게 흐른다 (가벼운 입자 60개)
+  _ambient() {
+    const cv = this.amb; if (!cv) return;
+    const dpr = Math.min(devicePixelRatio || 1, 1.25); const W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; this._parts = null; }
+    cv.classList.remove('hidden');
+    const g = cv.getContext('2d'); g.clearRect(0, 0, W, H);
+    const v = this.voy, sp = this.paused ? 0 : (0.002 + Math.min(0.05, v.beta * 0.25)) * this.speed;
+    if (!this._parts) this._parts = Array.from({ length: 60 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
+    for (const p of this._parts) {
+      p.z -= sp; if (p.z <= 0.02) { p.x = Math.random() * 2 - 1; p.y = Math.random() * 2 - 1; p.z = 1; }
+      const k = 0.5 / p.z, x = W / 2 + p.x * k * W * 0.6, y = H / 2 + p.y * k * H * 0.6;
+      const k2 = 0.5 / (p.z + sp * 3), x2 = W / 2 + p.x * k2 * W * 0.6, y2 = H / 2 + p.y * k2 * H * 0.6;
+      g.strokeStyle = `rgba(220,230,255,${0.12 + 0.5 * (1 - p.z)})`; g.lineWidth = 1 + (1 - p.z) * 1.5;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
+    }
   }
   _drawScene() {
     const dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -266,7 +286,11 @@ export class TripMode {
     const [catName, color] = CAT[p.ev.cat] || CAT.nav;
     this.card.style.setProperty('--cat', color);
     if (p.ev.fx) this._fx(p.ev.fx);
-    const html = `${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
+    this.card.dataset.cat = p.ev.cat; this.card.dataset.ev = p.ev.id;
+    this.cockpit.classList.toggle('alert', ALERT.has(p.ev.cat));
+    const m = v._m && v._m.alive && ['crew', 'mind', 'med', 'rock', 'sf'].includes(p.ev.cat) && (p.title.includes(v._m.name) || p.desc.includes(v._m.name)) ? v._m : null;
+    const who = m ? `<div class="who"><i style="--h:${hue(m.name)}">${esc(m.name[0])}</i><span>${esc(m.name)}<em>${esc(m.role)}</em></span></div>` : '';
+    const html = `${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div>${who}<div class="d">${esc(p.desc)}</div>
       <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
     this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });
   }
@@ -279,6 +303,7 @@ export class TripMode {
     // 결과 문장을 잠깐 보여주고 저절로 이어진다 (누르면 바로)
     const [catName] = CAT[r.cat] || CAT.nav;
     if (r.fx) this._fx(r.fx);
+    this.card.dataset.cat = r.cat; this.cockpit.classList.remove('alert');
     this.card.innerHTML = `${art(r.cat, this._lastEvId)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
     this.card.classList.remove('hidden');
     const hold = Math.min(5200, 1600 + r.text.length * 45);
@@ -301,7 +326,7 @@ export class TripMode {
     if (s.arrived) { this.landing.classList.remove('hidden'); requestAnimationFrame(() => this.landing.classList.add('on')); }
     const rows = s.log.map((e) => `<li class="${e.cat}"><i style="--cat:${(CAT[e.cat] || CAT.nav)[1]}">${icon(e.cat)}</i><div><div class="w">${fmtAgo(e.tau)}</div>${esc(e.text)}</div></li>`).join('');
     const dist = v.distM * (1 - s.f);
-    this.interior.classList.remove('on');
+    this.interior.classList.remove('on'); this.amb.classList.add('hidden'); this.cockpit.classList.remove('alert'); this.card.dataset.cat = s.arrived ? 'earth' : 'end';
     const head = (s.arrived ? art('earth') : art('end')) + (s.arrived
       ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔다</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.gamma > 1.05 ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
       : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`);
@@ -375,6 +400,7 @@ export class TripMode {
   tick(dt, now) {
     const map = this.map;
     if (this.sceneOn && now - (this._sceneAt || 0) > 100) { this._sceneAt = now; this._drawScene(); }
+    if (this.state === 'voyage' && now - (this._ambAt || 0) > 40) { this._ambAt = now; this._ambient(); }
     if (this.state === 'voyage') {
       const v = this.voy;
       if (v.pending && this.card.classList.contains('hidden')) this._eventCard();
