@@ -2,7 +2,7 @@
 :root {
   --bg: #050608;
   --bg-2: #0b0d12;
-  --panel: rgba(10, 12, 17, 0.72);
+  --panel: rgba(10, 12, 17, 0.86);
   --panel-solid: #0e1016;
   --line: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.16);
@@ -54,23 +54,23 @@ a:hover { text-decoration: underline; }
 #brand { display: flex; align-items: baseline; gap: 10px; }
 #brand .mark { font-weight: 650; letter-spacing: 0.02em; font-size: 15px; }
 #brand .sub { color: var(--text-3); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-nav#tabs { display: flex; gap: 2px; margin-left: 12px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(10,12,17,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+nav#tabs { display: flex; gap: 2px; margin-left: 12px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(10,12,17,.55); }
 nav#tabs button { padding: 6px 14px; border-radius: 999px; color: var(--text-2); font-size: 13px; letter-spacing: 0.01em; transition: all .18s; }
 nav#tabs button:hover { color: var(--text); }
 nav#tabs button.active { background: rgba(255,255,255,.1); color: #fff; }
 #top .spacer { flex: 1; }
 #clock { font-size: 12px; color: var(--text-2); display: flex; gap: 10px; align-items: center; }
 #clock .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-#live-btn { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--text-2); background: rgba(10,12,17,.55); backdrop-filter: blur(14px); }
+#live-btn { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--text-2); background: rgba(10,12,17,.55); }
 #live-btn:hover { color: var(--text); border-color: var(--line-2); }
 
 /* ---------- 왼쪽 패널 ---------- */
-#panel { position: fixed; top: 68px; left: 16px; bottom: 16px; width: var(--panel-w); z-index: 15; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); box-shadow: 0 20px 60px rgba(0,0,0,.45); overflow: hidden; transition: transform .28s ease, opacity .28s; }
+#panel { position: fixed; top: 68px; left: 16px; bottom: 16px; width: var(--panel-w); z-index: 15; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.45); overflow: hidden; transition: transform .28s ease, opacity .28s; }
 #panel.collapsed { transform: translateX(calc(-100% - 24px)); opacity: 0; pointer-events: none; }
 #panel-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 18px 20px 24px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.12) transparent; }
 #panel-body::-webkit-scrollbar { width: 6px; }
 #panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
-#panel-toggle { position: fixed; top: 68px; left: 16px; z-index: 16; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); backdrop-filter: blur(14px); color: var(--text-2); display: none; align-items: center; justify-content: center; }
+#panel-toggle { position: fixed; top: 68px; left: 16px; z-index: 16; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text-2); display: none; align-items: center; justify-content: center; }
 #panel.collapsed ~ #panel-toggle { display: flex; }
 
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
@@ -160,7 +160,7 @@ table.tbl tr.active td { color: var(--accent-2); }
 #hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 15; font-size: 12px; color: var(--text-3); pointer-events: none; text-align: center; letter-spacing: .01em; }
 
 /* 카드(지도에서 선택 시) */
-#card { position: fixed; right: 22px; bottom: 22px; width: 320px; z-index: 16; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.45); transition: opacity .2s, transform .2s; }
+#card { position: fixed; right: 22px; bottom: 22px; width: 320px; z-index: 16; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.45); transition: opacity .2s, transform .2s; }
 #card.hidden { display: none; }
 #card .close { position: absolute; top: 10px; right: 12px; color: var(--text-3); font-size: 18px; line-height: 1; }
 
@@ -192,7 +192,7 @@ table.tbl tr.active td { color: var(--accent-2); }
 #flash { position: fixed; inset: 0; z-index: 13; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.2s; }
 
 /* 오른쪽 실시간 서랍 */
-#drawer { position: fixed; top: 68px; right: 16px; bottom: 16px; width: 360px; z-index: 17; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 20px 60px rgba(0,0,0,.45); padding: 18px 20px; overflow-y: auto; transform: translateX(calc(100% + 24px)); opacity: 0; transition: transform .28s ease, opacity .28s; }
+#drawer { position: fixed; top: 68px; right: 16px; bottom: 16px; width: 360px; z-index: 17; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.45); padding: 18px 20px; overflow-y: auto; transform: translateX(calc(100% + 24px)); opacity: 0; transition: transform .28s ease, opacity .28s; }
 #drawer.open { transform: none; opacity: 1; }
 #drawer .close { position: absolute; top: 12px; right: 14px; color: var(--text-3); font-size: 18px; }
 .status { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
@@ -250,4 +250,9 @@ details.refs li { margin: 2px 0; }
   #hud .timeline { bottom: calc(52vh + 44px); width: 86vw; }
   #hud .stretch, #hud .stretch-l { display: none; }
   .stat-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 유리 효과: 캔버스가 매 프레임 바뀌면 blur 도 매 프레임 다시 계산되므로, 마우스가 있는 큰 화면에서만 약하게 */
+@media (hover: hover) and (min-width: 900px) {
+  #panel, #card, #drawer, nav#tabs, #live-btn, #panel-toggle { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 }

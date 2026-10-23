@@ -72,7 +72,8 @@ function wireChrome() {
 
 function resize() {
   const w = innerWidth, h = innerHeight;
-  const dpr = Math.min(devicePixelRatio || 1, 2);
+  // 지도는 점 16만 개를 가산 합성으로 그리므로 픽셀 비율을 1.5 까지만 쓴다
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
   ctx.map.resize(Math.round(w * dpr), Math.round(h * dpr));
   ctx.els.mapCanvas.style.width = w + 'px'; ctx.els.mapCanvas.style.height = h + 'px';
   ctx.bh.resize();

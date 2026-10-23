@@ -13,9 +13,12 @@ export class BHView {
     this.R.setSky(skyCanvas);
     this.cam = { inc: 80, az: 0, dist: 28, fov: 42 };   // inc: 자전축에서 잰 각(도), az: 방위(도)
     this.target = { ...this.cam };
-    this.scale = 0.5;             // 현재 렌더 해상도 배율
-    this.idleScale = 0.5;
-    this.maxScale = Math.min(1, 1.5 / Math.max(1, devicePixelRatio)) * Math.min(1, devicePixelRatio);
+    this.scale = 0.35;            // 현재 렌더 해상도 배율 (CSS 픽셀 × dpr 기준)
+    this.liveScale = 0.35;        // 움직이거나 원반이 돌 때 쓰는 배율. 프레임 시간을 보고 계속 조절한다
+    this.hq = false;
+    this.maxScale = 1;            // 멈췄을 때 한 번 그리는 배율. resize() 에서 픽셀 예산으로 정한다
+    this.stillPixels = 2.0e6;     // 정지 화면 픽셀 예산
+    this.minScale = 0.12;
     this.dirty = true;
     this.lastInteract = 0;
     this.animate = true;
@@ -81,9 +84,14 @@ export class BHView {
     const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
     if (!w || !h) return;
     const dpr = Math.min(devicePixelRatio || 1, 2);
+    // 정지 화면은 픽셀 예산 안에서만 (고화질이면 dpr 전체)
+    const full = w * h * dpr * dpr;
+    this.maxScale = this.hq ? 1 : Math.min(1, Math.sqrt(this.stillPixels / full));
+    this.liveScale = clamp(this.liveScale, this.minScale, this.maxScale);
     const W = Math.max(64, Math.round(w * dpr * this.scale)), H = Math.max(36, Math.round(h * dpr * this.scale));
     this.R.resize(W, H);
   }
+  setHQ(on) { this.hq = on; this.resize(); this.touch(); }
   // 낙하 카메라: 자전축 위 r (단위 M), 보존 에너지 E
   setFall(r, E, chi, look = 'down') {
     this.fall = { r, E, chi, look };
@@ -126,22 +134,24 @@ export class BHView {
     const animating = this.animate && s.disk.on;
     if (animating) { s.time += dt * this.timeScale; }
     const idleFor = now - this.lastInteract;
-    let want;
-    if (moving || this.fall || idleFor < 120) want = this.idleScale;
-    else if (animating) want = Math.min(this.maxScale, this.idleScale * 1.5);
-    else want = idleFor < 500 ? this.idleScale : this.maxScale;   // 멈추면 선명하게
-    const need = this.dirty || moving || animating || this.fall || want !== this.scale;
+    const live = moving || !!this.fall || animating || idleFor < 400;   // 매 프레임 그리는 상태
+    // 적응형 해상도: 직전 프레임 간격(dt)이 GPU 가 밀린 정도를 그대로 보여 준다. 30 fps 근처를 목표로 올리고 내린다
+    if (this._liveLast) {
+      if (dt > 0.05) this.liveScale *= 0.85;
+      else if (dt > 0.038) this.liveScale *= 0.96;
+      else if (dt < 0.022) this.liveScale *= 1.02;
+      this.liveScale = clamp(this.liveScale, this.minScale, this.maxScale);
+    }
+    this._liveLast = live;
+    const want = live ? this.liveScale : this.maxScale;       // 멈추면 한 번 선명하게
+    const need = this.dirty || live || Math.abs(want - this.scale) > 0.01;
     if (!need) return false;
-    if (want !== this.scale) { this.scale = want; this.resize(); }
+    if (Math.abs(want - this.scale) > 0.01) { this.scale = want; this.resize(); }
+    // 적분 스텝: 움직일 때는 짧게, 정지 화면은 길게, 고화질은 더 길게
+    s.maxSteps = this.hq ? 900 : live ? 300 : 520;
     this._applyCamera();
-    const t0 = performance.now();
     this.R.render();
     this.dirty = false;
-    // 적응형: 느리면 상호작용 해상도를 낮추고, 빠르면 올린다 (gl.finish 없이 CPU 제출 시간만 보므로 보수적으로)
-    const ms = performance.now() - t0;
-    this.frameMs = this.frameMs * 0.8 + ms * 0.2;
-    if (dt > 0.09 && this.scale === this.idleScale) this.idleScale = clamp(this.idleScale * 0.85, 0.2, 1);
-    else if (dt < 0.028 && this.scale === this.idleScale) this.idleScale = clamp(this.idleScale * 1.04, 0.2, this.maxScale);
     this.onFrame?.();
     return true;
   }

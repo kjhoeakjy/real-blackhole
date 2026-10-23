@@ -150,7 +150,9 @@ export class MapMode {
     const y = 100 - (map.logDist - lo) / (hi - lo) * 100;
     this.cursor.style.top = y + '%'; this.cursorLabel.style.top = y + '%';
     this.cursorLabel.textContent = fmtDist(map.distanceMeters);
-    // 라벨
+    // 라벨 (DOM 갱신은 초당 20번, 내용이 바뀔 때만)
+    if (now - (this._labelAt || 0) < 50) { this._panel(now); return; }
+    this._labelAt = now;
     const PRI = { sun: 0, planet: 2, bh: 3, galaxy: 4 };
     const labels = map.projectLabels().sort((a, b) => (PRI[a.kind] - (a.data?.body === 'Earth' ? 1 : 0)) - (PRI[b.kind] - (b.data?.body === 'Earth' ? 1 : 0)));
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -165,8 +167,12 @@ export class MapMode {
       const data = l.kind === 'bh' ? `data-bh="${l.data.id}"` : l.kind === 'planet' ? `data-planet="${l.data.body}"` : l.kind === 'sun' ? 'data-sun' : '';
       html += `<div class="lbl ${l.kind}${sel ? ' selected' : ''}" ${data} style="left:${x.toFixed(1)}px;top:${y2.toFixed(1)}px;opacity:${l.alpha.toFixed(2)}">${esc(l.text)}</div>`;
     }
-    this.ctx.els.labels.innerHTML = html;
-    // 패널 수치 (1초마다)
+    if (html !== this._labelHtml) { this._labelHtml = html; this.ctx.els.labels.innerHTML = html; }
+    this._panel(now);
+  }
+  // 패널 수치 (1초마다)
+  _panel(now) {
+    const map = this.map;
     if (now - this.lastPlanet > 1000) {
       this.lastPlanet = now;
       const d = new Date();

@@ -117,7 +117,7 @@ function pointsMaterial(baseSize, opacity = 1, additive = true) {
       attribute float aSize; attribute vec3 aColor; varying vec3 vColor; varying float vAlpha;
       uniform float uSize; uniform float uScale;
       void main(){ vColor = aColor; vec4 mv = modelViewMatrix*vec4(position,1.0);
-        float d = -mv.z; float ps = uSize*aSize*uScale/d; ps = clamp(ps, 1.0, 40.0);
+        float d = -mv.z; float ps = uSize*aSize*uScale/d; ps = clamp(ps, 1.0, 14.0);
         vAlpha = clamp(uSize*aSize*uScale/d/1.5, 0.08, 1.0);
         gl_PointSize = ps; gl_Position = projectionMatrix*mv; }`,
     fragmentShader: `
@@ -269,7 +269,9 @@ export class UniverseMap {
 
     // ===== 은하 층 (단위 kpc; 1 kpc = 1000 pc) =====
     const gal = new THREE.Scene();
-    const g = buildGalaxyPoints();
+    // 점 개수: 코어가 적거나 터치 기기면 줄인다 (가산 합성 채우기 비용)
+    const light = (navigator.hardwareConcurrency || 8) <= 4 || matchMedia('(pointer: coarse)').matches;
+    const g = buildGalaxyPoints(light ? 90000 : 160000);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(g.pos, 3));
     geo.setAttribute('aColor', new THREE.BufferAttribute(g.col, 3));
@@ -329,7 +331,7 @@ export class UniverseMap {
 
   // 실시간 행성 위치 갱신 (astronomy-engine; JPL Horizons 벡터가 주어지면 그것을 우선 사용)
   updatePlanets(date = new Date(), horizons = null) {
-    this.now = date;
+    this.now = date; this._needsRender = true;
     for (const s of this.planetSprites) {
       const p = s.userData;
       let xyz;
@@ -343,6 +345,7 @@ export class UniverseMap {
   }
 
   resize(w, h) {
+    this._needsRender = true;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
     this.w = w; this.h = h;
@@ -358,7 +361,7 @@ export class UniverseMap {
     return 1;
   }
 
-  zoomTo(logDist) { this.targetLogDist = THREE.MathUtils.clamp(logDist, this.minLog, this.maxLog); }
+  zoomTo(logDist) { this.targetLogDist = THREE.MathUtils.clamp(logDist, this.minLog, this.maxLog); this._needsRender = true; }
   // 행성으로 이동: 그 행성을 따라가며, 햇빛 받는 쪽이 보이도록 태양 쪽에서 바라본다
   flyToPlanet(body) {
     const sp = this.planetSprites.find((s) => s.userData.body === body);
@@ -393,6 +396,11 @@ export class UniverseMap {
     const dir = this.camera.position.clone().normalize();
     this._dirV = dir;
     const D = Math.pow(10, this.logDist);
+    // 아무것도 안 움직이면 다시 그리지 않는다 (행성 위치 갱신·창 크기·이동 요청은 _needsRender 로 깨운다)
+    const sig = [dir.x, dir.y, dir.z, this.logDist, this.focus.x, this.focus.y, this.focus.z];
+    const same = this._sig && sig.every((v, i) => Math.abs(v - this._sig[i]) < 1e-9 * (1 + Math.abs(v)));
+    if (same && !this._needsRender && !this._flyDir && !this.focusBody && !this._focusHome) { this._dir = dir; this._D = D; return; }
+    this._sig = sig; this._needsRender = false;
     // 행성에 붙어 있을 때는 궤도선을 감춘다 (화면을 가로지르는 줄이 되므로)
     this._orbitFade = THREE.MathUtils.lerp(this._orbitFade ?? 1, this.focusBody ? 0 : 1, Math.min(1, dt * 4));
     // 행성을 따라가다 멀리 나가면 태양으로 돌아온다
@@ -452,9 +460,11 @@ export class UniverseMap {
     const out = [];
     const dir = this._dir; if (!dir) return out;
     const v = new THREE.Vector3();
-    for (const lb of this.labels) {
-      const L = this.layers[lb.layer];
-      const alpha = this._layerAlpha(lb.layer);
+    // 층마다 카메라를 한 번만 맞춘다 (라벨마다 투영 행렬을 다시 만들지 않도록)
+    const cams = {};
+    for (const key in this.layers) {
+      const L = this.layers[key];
+      const alpha = this._layerAlpha(key);
       if (alpha < 0.05) continue;
       const dUnits = this._D / L.unit;
       const f = this.focus.clone().divideScalar(L.unit);
@@ -462,9 +472,13 @@ export class UniverseMap {
       this.camera.near = dUnits * 1e-4; this.camera.far = dUnits * 1e5;
       this.camera.updateProjectionMatrix(); this.camera.lookAt(f);
       this.camera.updateMatrixWorld();
-      // 카메라 뒤쪽은 건너뛴다 (투영하면 화면 안쪽에 거꾸로 찍힌다)
-      if (v.copy(lb.obj.position).sub(this.camera.position).dot(dir) > 0) continue;
-      v.copy(lb.obj.position).project(this.camera);
+      cams[key] = { alpha, dUnits, f, pos: this.camera.position.clone(), vp: this.camera.projectionMatrix.clone().multiply(this.camera.matrixWorldInverse) };
+    }
+    for (const lb of this.labels) {
+      const C = cams[lb.layer]; if (!C) continue;
+      const { alpha, dUnits, f } = C;
+      if (v.copy(lb.obj.position).sub(C.pos).dot(dir) > 0) continue;   // 카메라 뒤쪽
+      v.copy(lb.obj.position).applyMatrix4(C.vp);
       if (v.z > 1 || v.z < -1) continue;
       const x = (v.x * 0.5 + 0.5) * this.w, y = (-v.y * 0.5 + 0.5) * this.h;
       // 너무 멀어서 화면 중앙 한 점에 뭉치는 라벨은 숨김 (태양계 행성은 궤도가 안 보이면 숨김)

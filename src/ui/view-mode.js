@@ -63,7 +63,7 @@ export class ViewMode {
         <div class="row wrap" style="margin-top:6px">
           <label class="toggle ${V.R.state.disk.on ? 'on' : ''}" id="v-disk"><span class="sw"></span>원반</label>
           <label class="toggle ${V.animate ? 'on' : ''}" id="v-anim"><span class="sw"></span>회전</label>
-          <label class="toggle" id="v-hq"><span class="sw"></span>고화질</label>
+          <label class="toggle${V.hq ? ' on' : ''}" id="v-hq"><span class="sw"></span>고화질</label>
         </div>
       </div>
       <div class="section">
@@ -102,7 +102,7 @@ export class ViewMode {
     q('#v-spin')?.addEventListener('input', (e) => { q('#v-spin-v').textContent = (+e.target.value).toFixed(3); });
     q('#v-disk').addEventListener('click', (e) => { this.diskOn = !V.R.state.disk.on; V.setDisk(this.diskOn); e.currentTarget.classList.toggle('on', V.R.state.disk.on); });
     q('#v-anim').addEventListener('click', (e) => { V.animate = !V.animate; e.currentTarget.classList.toggle('on', V.animate); V.touch(); });
-    q('#v-hq').addEventListener('click', (e) => { const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); V.maxScale = on ? Math.min(devicePixelRatio || 1, 2) : Math.min(1, 1.5 / Math.max(1, devicePixelRatio)) * Math.min(1, devicePixelRatio); V.R.state.maxSteps = on ? 900 : 500; V.touch(); });
+    q('#v-hq').addEventListener('click', (e) => { const on = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', on); V.setHQ(on); });
     q('#v-drop').addEventListener('click', () => this.ctx.setMode('drop', bh.custom ? 'custom' : bh.id));
   }
   tick() {}
