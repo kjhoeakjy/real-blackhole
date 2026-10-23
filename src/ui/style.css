@@ -327,3 +327,37 @@ details.refs li { margin: 2px 0; }
   #card .stats { grid-template-columns: repeat(2, 1fr); }
   @keyframes cardIn { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 }
+
+/* ---------- 눈을 뜬 곳의 풍경, 배 안, 프롤로그 ---------- */
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 12; pointer-events: none; transition: opacity 1.6s ease, transform 1.6s ease; }
+#scene.lift { opacity: 0; transform: translateY(40vh) scale(1.08); }
+#interior { position: fixed; inset: 0; z-index: 13; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
+#interior.on { opacity: 1; }
+#interior svg { width: 100%; height: 100%; display: block; }
+#interior .hull { fill: #07080b; }
+#interior .strut { fill: url(#strut); }
+#interior .rim { stroke: rgba(255,255,255,.08); stroke-width: 2; }
+#interior .lights circle { fill: #7fd1a8; opacity: .7; animation: blink 2.4s infinite; }
+#interior .lights circle:nth-child(2) { fill: #e9a65b; animation-delay: .8s; }
+#interior .lights circle:nth-child(3), #interior .lights circle:nth-child(6) { fill: #7fb3ff; animation-delay: 1.5s; }
+@keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: .9; } }
+#cockpit .frame { box-shadow: inset 0 0 120px 20px rgba(0,0,0,.6); border: 0; }
+
+#prologue { position: fixed; inset: 0; z-index: 21; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, rgba(16,19,27,.985), rgba(5,6,8,1)); }
+#prologue .box { width: min(640px, calc(100vw - 48px)); }
+#prologue .lines p { font-size: 26px; line-height: 1.5; margin: 0 0 14px; opacity: 0; transform: translateY(8px); animation: lineIn .9s ease forwards; letter-spacing: -0.01em; }
+#prologue .lines p:nth-child(1) { animation-delay: .3s; } #prologue .lines p:nth-child(2) { animation-delay: 1.6s; } #prologue .lines p:nth-child(3) { animation-delay: 3.1s; } #prologue .lines p:nth-child(4) { animation-delay: 4.6s; } #prologue .lines p:nth-child(5) { animation-delay: 6.1s; }
+#prologue .lines p.faint { color: var(--text-2); font-size: 20px; }
+@keyframes lineIn { to { opacity: 1; transform: none; } }
+#prologue .age, #prologue .btn { opacity: 0; animation: lineIn .9s ease forwards; animation-delay: 7.2s; }
+#prologue .age { display: flex; align-items: center; gap: 12px; margin: 26px 0 18px; font-size: 16px; color: var(--text-2); }
+#prologue .age input { width: 90px; font-size: 18px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: rgba(255,255,255,.04); color: var(--text); text-align: center; }
+#prologue .btn { font-size: 17px; padding: 12px 28px; }
+#prologue.hidden { display: none; }
+
+/* 카드 머리 그림: 분류색 빛과 큰 아이콘 */
+#card .art { position: relative; height: 96px; margin: -22px -24px 16px; border-radius: 18px 18px 0 0; overflow: hidden; background: radial-gradient(ellipse at 30% 120%, color-mix(in srgb, var(--cat) 45%, transparent), transparent 60%), radial-gradient(ellipse at 85% 0%, color-mix(in srgb, var(--cat) 25%, transparent), transparent 55%), #0d1016; }
+#card .art svg { position: absolute; right: 18px; bottom: -14px; width: 110px; height: 110px; color: var(--cat); opacity: .35; }
+#card .art .dots i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--cat); opacity: .5; animation: drift 6s linear infinite; }
+@keyframes drift { from { transform: translateY(0); opacity: .6; } to { transform: translateY(-80px); opacity: 0; } }
+@media (max-width: 860px) { #card .art { height: 70px; margin: -16px -16px 12px; } #card .art svg { width: 80px; height: 80px; } #prologue .lines p { font-size: 21px; } #prologue .lines p.faint { font-size: 17px; } }

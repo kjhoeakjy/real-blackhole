@@ -7,6 +7,7 @@ import { AU, PC, LY, KPC, MPC, YEAR, DAY, M_SUN, rs } from '../physics/constants
 import { horizons } from '../physics/gr.js';
 import { fmtSolar, fmtKm, fmtSci, esc, el } from './format.js';
 import { tiltDir, radecToGalUnit } from '../scene/map.js';
+import { drawSurface } from '../scene/surface.js';
 
 const TICKS = [
   [7, '10,000 km'], [Math.log10(3.844e8), '달 궤도'], [Math.log10(AU), '1 AU'], [Math.log10(30 * AU), '해왕성 궤도'],
@@ -45,6 +46,7 @@ const ICON = {
   end: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
   sf: '<path d="M12 3l2.2 5.6L20 9.3l-4.5 3.9 1.4 5.8L12 16l-4.9 3 1.4-5.8L4 9.3l5.8-.7z"/>',
 };
+const art = (cat) => `<div class="art">${icon(cat)}<div class="dots">${Array.from({ length: 6 }, (_, i) => `<i style="left:${10 + i * 15}%;bottom:${5 + (i * 37) % 40}px;animation-delay:${-i * 1.1}s"></i>`).join('')}</div></div>`;
 const icon = (cat) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[cat] || ICON.nav}</svg>`;
 
 export class TripMode {
@@ -58,7 +60,9 @@ export class TripMode {
     this.toast = document.getElementById('toast');
     this.landing = document.getElementById('landing');
     this.ctl = document.getElementById('voy-ctl');
+    this.scene = document.getElementById('scene'); this.interior = document.getElementById('interior'); this.prologue = document.getElementById('prologue');
     this._wireCtl();
+    window.addEventListener('resize', () => { if (this.sceneOn) this._drawScene(); });
   }
   starts() {
     if (this._starts) return this._starts;
@@ -85,8 +89,9 @@ export class TripMode {
   _setup(fly) {
     this.state = 'setup'; this.voy = null; this.from = null; this.route = null; this.ship = null; this.bhLogR = 3;
     this.map.exitFirstPerson();
-    for (const e of [this.card, this.cockpit, this.top, this.ctl, this.landing]) e.classList.add('hidden');
-    this.landing.classList.remove('on');
+    for (const e of [this.card, this.cockpit, this.top, this.ctl, this.landing, this.scene]) e.classList.add('hidden');
+    this.landing.classList.remove('on'); this.scene.classList.remove('lift'); this.interior.classList.remove('on'); this.interior.classList.add('hidden'); this.sceneOn = false;
+    this._prologue();
     this.ctx.els.scale.classList.remove('hidden');
     this.ctx.els.panel.classList.remove('collapsed');
     if (this.ctx.bhOn) this.ctx.showBH(false);
@@ -95,11 +100,10 @@ export class TripMode {
     const n = this.starts().length;
     this.root = el(`<div>
       <div class="section"><div class="eyebrow">지금 이 순간의 우주</div><div class="title-lg">지구로 돌아가기</div>
-        <p class="note" style="margin-top:6px">우주 어딘가에서 눈을 떠요. 어디일지는 고를 수 없어요. 배를 타면 시간이 흐르고, 나이를 먹고, 사건이 끼어들어요. 그때마다 고르세요. 거리·속도·위험은 전부 실제 측정값이에요.</p></div>
+        <p class="note" style="margin-top:6px">납치됐다가 우주 어딘가에서 눈을 떠요. 어디일지는 고를 수 없어요. 배를 타면 시간이 흐르고, 나이를 먹고, 사건이 끼어들어요. 그때마다 고르세요. 거리·속도·위험은 전부 실제 측정값이에요.</p></div>
       <div class="section">
-        <div class="ctl"><label>내 나이</label><input type="number" id="t-age" min="1" max="100" step="1" value="${this.age}"><span class="val">세</span></div>
-        <div class="row" style="margin-top:14px"><button class="btn primary block" id="t-go">눈 뜨기</button></div>
-        <p class="note tiny" style="margin-top:8px">출발지 ${n}곳 중 하나: 달·행성, 가까운 별, 블랙홀 곁, 다른 은하.</p>
+        <div class="row"><button class="btn primary block" id="t-go">처음부터</button></div>
+        <p class="note tiny" style="margin-top:8px">출발지 ${n}곳 중 하나: 달·행성·위성, 탐사선 곁, 가까운 별, 성운, 블랙홀 곁, 다른 은하.</p>
       </div>
       <div class="section"><details class="refs"><summary>무엇이 실제인가요</summary><ul>
         <li>거리는 지금 이 순간의 위치 (행성 VSOP87, 별 Gaia 시차, 블랙홀 각 논문). 빛에 가까우면 배 안의 시간이 느리게 가요.</li>
@@ -111,21 +115,35 @@ export class TripMode {
     </div>`);
     b.appendChild(this.root);
     const q = (s) => this.root.querySelector(s);
-    q('#t-age').addEventListener('input', (e) => { this.age = Math.min(100, Math.max(1, +e.target.value || 30)); });
-    q('#t-go').addEventListener('click', () => this._wake());
+    q('#t-go').addEventListener('click', () => this._setup(false));
     this.ctx.setHint('끌기 회전 · 휠/핀치 거리');
     this.map.clearRoute(); this.map.focusSun();
     if (fly) this.map.flyTo(tiltDir(new THREE.Vector3(0.6, -1.4, 0).normalize(), 0.55), 12.2, false);
+  }
+  _prologue() {
+    const pr = this.prologue;
+    pr.querySelector('.lines').innerHTML = `<p>눈을 떠요.</p><p class="faint">마지막 기억은 집 앞 골목, 그리고 머리 위에서 내려온 빛.</p><p>여긴 지구가 아니에요.</p><p class="faint">그들은 떠났어요. 남긴 건 우주선 한 척과 식량뿐.</p><p>지구로 돌아가야 해요.</p>`;
+    pr.classList.remove('hidden');
+    this.ctx.els.panel.classList.add('collapsed');
+    const ageEl = pr.querySelector('#p-age'); ageEl.value = this.age;
+    ageEl.oninput = (e) => { this.age = Math.min(100, Math.max(1, +e.target.value || 30)); };
+    pr.querySelector('#p-go').onclick = () => { pr.classList.add('hidden'); this._wake(); };
+  }
+  _drawScene() {
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    this.scene.width = Math.round(innerWidth * dpr); this.scene.height = Math.round(innerHeight * dpr);
+    drawSurface(this.scene, this.route.from, performance.now() / 1000);
   }
   _wake() {
     const list = this.starts();
     this.from = list[Math.floor(Math.random() * list.length)].id;
     this._setupRoute();
     const { from, distM } = this.route;
+    if (from.kind !== 'bh') { this.scene.classList.remove('hidden', 'lift'); this.sceneOn = true; this._drawScene(); }
     const kindText = { solar: '태양계', probe: '태양계 바깥', star: '별', bh: '블랙홀 곁', galaxy: '다른 은하' }[from.kind];
     this._card(`<div class="step">${icon('nav')} 눈을 뜬 곳 · ${kindText}</div><div class="t">${esc(from.name)}</div>
-      <div class="d">${from.note ? esc(from.note) + '<br>' : ''}지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
-      <div class="opts">${opt(0, '우주선으로', '격납고에 배 세 척이 있어요')}</div>`, () => this._hangar());
+      <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '그들의 배는 지평선 위에서 멀어지고, 바위 사이에 캡슐 한 척이 서 있어요.', probe: '우주복 안이에요. 옆에는 1977년에 떠난 탐사선이 조용히 돌고, 조금 떨어진 곳에 배가 기다려요.', star: '낯선 별 아래 바위 벌판. 바위 사이에 캡슐 한 척이 서 있어요.', galaxy: '별도 땅도 없는 깊은 어둠. 창밖에 은하 하나가 하늘을 채우고, 배는 이미 내 뒤에 있어요.', bh: '블랙홀의 빛 고리가 하늘을 채워요. 배는 지평선 바깥에 떠 있어요.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
+      <div class="opts">${opt(0, '우주선으로', '식량 상자 옆에 배 세 척의 열쇠가 있어요')}</div>`, () => this._hangar());
     this.ctx.els.panel.classList.add('collapsed');
     this.ctx.els.scale.classList.add('hidden');
     this.ctx.setHint('');
@@ -181,6 +199,8 @@ export class TripMode {
     this.eventGap = horizon / EVENTS_PER_LIFE;
     this.state = 'voyage'; this.paused = false; this.shownLog = this.voy.s.log.length; this.resultWait = 0; this.hints = HINTS_PER_VOYAGE;
     this.card.classList.add('hidden');
+    if (this.sceneOn) { this.scene.classList.add('lift'); this.sceneOn = false; setTimeout(() => this.scene.classList.add('hidden'), 1700); }
+    this.interior.classList.remove('hidden'); requestAnimationFrame(() => this.interior.classList.add('on'));
     this.cockpit.classList.remove('hidden'); this.top.classList.remove('hidden'); this.ctl.classList.remove('hidden');
     this.ctx.els.panel.classList.add('collapsed');
     this._panelLog();
@@ -206,7 +226,7 @@ export class TripMode {
     const v = this.voy, p = v.pending, s = v.s;
     const [catName, color] = CAT[p.ev.cat] || CAT.nav;
     this.card.style.setProperty('--cat', color);
-    const html = `<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
+    const html = `${art(p.ev.cat)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
       <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
     this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });
   }
@@ -217,7 +237,7 @@ export class TripMode {
     this._panelLog();
     // 결과 문장을 잠깐 보여주고 저절로 이어진다 (누르면 바로)
     const [catName] = CAT[r.cat] || CAT.nav;
-    this.card.innerHTML = `<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
+    this.card.innerHTML = `${art(r.cat)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
     this.card.classList.remove('hidden');
     const hold = Math.min(5200, 1600 + r.text.length * 45);
     this.card.querySelector('.timer i').style.transitionDuration = `${hold}ms`;
@@ -239,9 +259,10 @@ export class TripMode {
     if (s.arrived) { this.landing.classList.remove('hidden'); requestAnimationFrame(() => this.landing.classList.add('on')); }
     const rows = s.log.map((e) => `<li class="${e.cat}"><i style="--cat:${(CAT[e.cat] || CAT.nav)[1]}">${icon(e.cat)}</i><div><div class="w">${fmtAgo(e.tau)}</div>${esc(e.text)}</div></li>`).join('');
     const dist = v.distM * (1 - s.f);
-    const head = s.arrived
+    this.interior.classList.remove('on');
+    const head = (s.arrived ? art('earth') : art('end')) + (s.arrived
       ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔어요</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.gamma > 1.05 ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
-      : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`;
+      : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`);
     const kv = `<div class="stats">
       <div><b class="num">${fmtDur(s.tau)}</b><span>배에서 보낸 시간</span></div>
       <div><b class="num">${fmtDist(v.distM * s.f)}</b><span>온 거리${s.arrived ? '' : ` · ${fmtDist(dist)} 남음`}</span></div>
@@ -311,6 +332,7 @@ export class TripMode {
 
   tick(dt, now) {
     const map = this.map;
+    if (this.sceneOn && now - (this._sceneAt || 0) > 100) { this._sceneAt = now; this._drawScene(); }
     if (this.state === 'voyage') {
       const v = this.voy;
       if (v.pending && this.card.classList.contains('hidden')) this._eventCard();
