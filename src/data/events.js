@@ -57,7 +57,7 @@ export const EVENTS = [
     id: 'oga-retry', cat: 'air', title: '산소가 줄어요',
     desc: (v) => `비축 산소가 ${Math.max(0, Math.round(v.s.o2))}일치 남았어요. 산소 발생기를 다시 손볼 때예요.`,
     src: 'ISS OGA 정비 이력',
-    when: (v) => !v.s.oga && v.s.o2 < 45, rate: (v) => 24,
+    when: (v) => !v.s.oga && v.s.o2 < 45, rate: (v) => 3,
     options: [
       { label: '다른 장치의 부품을 뜯어 쓴다', hint: '물 재활용기와 산소 발생기는 같은 종류의 펌프를 써요.',
         go: (v) => chance(0.75) ? { text: '재활용기 펌프를 옮겨 달았어요. 산소가 돌아왔어요. 물은 당분간 아껴 써요.', oga: true, recycler: false } : { text: '옮겨 단 펌프도 돌지 않았어요. 산소가 더 줄어요.', o2: -10 } },
@@ -70,7 +70,7 @@ export const EVENTS = [
     id: 'water-retry', cat: 'water', title: '물이 줄어요',
     desc: (v) => `비축 물이 ${Math.max(0, Math.round(v.s.water))}일치 남았어요. 재활용기를 다시 살려야 해요.`,
     src: 'ISS WPA 정비 이력; 식량 속 수분 회수',
-    when: (v) => !v.s.recycler && v.s.water < 45, rate: (v) => 24,
+    when: (v) => !v.s.recycler && v.s.water < 45, rate: (v) => 3,
     options: [
       { label: '예비 부품 없이 다시 조립해 본다', hint: '세 번 중 두 번은 돌아요.', go: (v) => chance(0.7) ? { text: '이틀을 매달렸어요. 물이 다시 돌아요. 맛은 그대로예요.', recycler: true, delay: 2 * DAY } : { text: '펌프가 끝내 돌지 않았어요. 물이 더 줄어요.', water: -5 } },
       { label: '공기 중 습기와 식량의 수분을 모은다', hint: '제습기와 식량 수분으로 하루 몇 컵. 식량이 줄어요.', go: (v) => ({ text: '제습 필터에서 하루 두 컵, 통조림 국물에서 한 컵. 버틸 만해요.', water: 40, food: -20, recycler: false }) },
@@ -80,7 +80,7 @@ export const EVENTS = [
     id: 'water', cat: 'water', title: '물 재활용기가 멈췄어요',
     desc: (v) => `땀과 오줌을 다시 물로 만드는 장치예요. ISS 는 98 % 를 되돌려요. 비축 물은 ${Math.round(v.s.water)}일치.`,
     src: 'NASA ISS 물 회수 98 % (2023); ISS WPA 필터 교체 이력',
-    when: (v) => v.s.recycler, rate: (v) => 0.4,
+    when: (v) => v.s.recycler, rate: (v) => 0.18,
     options: [
       { label: '필터를 뜯어 손으로 씻는다', hint: '필터에 낀 생물막이 원인일 때가 많아요. 씻어 쓰면 세균이 남을 수 있어요.',
         go: (v) => chance(0.6) ? { text: '하루 걸려 필터를 씻었어요. 물맛이 조금 이상하지만 돌아가요.', delay: DAY } : { text: '씻은 필터에서 세균이 자랐어요. 일주일 배탈을 앓았어요.', health: -0.1, delay: DAY } },
@@ -250,7 +250,7 @@ export const EVENTS = [
     id: 'dust', cat: 'rock', title: '앞 방패에 금이 갔어요',
     desc: (v) => `빛의 ${Math.round(v.beta * 100)} % 에서는 모래알 하나가 수류탄만 한 에너지예요. 앞 방패판에 새 자국이 생겼어요.`,
     src: 'Hoang, Lazarian, Burkhart & Loeb 2017, ApJ 837, 5',
-    when: (v) => v.beta >= 0.05, rate: (v) => 0.6 * (v.beta / 0.2) ** 2,
+    when: (v) => v.beta >= 0.05, rate: (v) => 0.22 * (v.beta / 0.2) ** 2,
     options: [
       { label: '방패판을 교체한다', hint: '예비판을 다는 동안 속도를 줄여야 해요.',
         go: (v) => ({ text: '감속하고 예비판을 달았어요. 다시 가속하는 데 시간을 썼어요.', delayFrac: 0.02 }) },
@@ -565,7 +565,7 @@ export const SF_EVENTS = [
     id: 'window', cat: 'rock', title: '창에 금이 갔어요',
     desc: (v) => '조종실 창 바깥쪽 유리에 손가락 길이의 금. 겹유리라 아직 괜찮아요.',
     src: 'ISS 큐폴라 창 손상 (2016, 7 mm 흠집)',
-    rate: (v) => 0.1,
+    rate: (v) => 0.04,
     options: [
       { label: '바깥 셔터를 내린다', hint: '밖을 못 봐요.', go: (v) => ({ text: '셔터를 내렸어요. 조종실이 어두워졌어요.', morale: -0.08 }) },
       { label: '안쪽에 수지를 바른다', hint: '보이는 건 흐려지지만 버텨요.', go: (v) => chance(0.85) ? { text: '수지가 굳었어요. 창은 조금 뿌옇지만 밖이 보여요.' } : { text: '금이 더 갔어요. 결국 셔터를 내렸어요.', morale: -0.08 } },
