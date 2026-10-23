@@ -116,7 +116,7 @@ export class Voyage {
     this.prevR = r;
     // 사건: 조건 사건(한 번)과 무작위 사건(푸아송). 연출을 위해 사건 사이 간격을 둔다
     const rateMul = (1 + (1 - s.morale) * 0.6) * (s.hib ? 0.35 : 1);   // 사기가 낮으면 실수가 는다, 동면 중엔 조용하다
-    const ok = (e) => (!s.hib || HIB_OK.has(e.id)) && !(s.flags.noantenna && ['message', 'badnews', 'supply', 'silence'].includes(e.id)) && !(s.flags.silence && ['message', 'badnews', 'supply'].includes(e.id));
+    const ok = (e) => (!s.hib || HIB_OK.has(e.id)) && !(s.flags.noantenna && ['message', 'supply', 'silence'].includes(e.id)) && !(s.flags.silence && ['message', 'supply'].includes(e.id));
     for (const e of EVENTS) {
       if (e.trigger && ok(e) && (!e.once || !s.flags[e.once]) && e.trigger(this)) { if (e.once) s.flags[e.once] = true; return this._raise(e); }
     }

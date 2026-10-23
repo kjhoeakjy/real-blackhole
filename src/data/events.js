@@ -522,16 +522,6 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'badnews', cat: 'earth', title: '지구에서 온 부고',
-    desc: (v) => `${fmtDelay(v.commDelay())} 걸려 온 메시지. 어머니가 돌아가셨어요. 장례는 이미 끝났어요.`,
-    src: 'ISS 승무원 가족 사별 사례 (2014 등)',
-    when: (v) => v.commDelay() < YEAR && v.s.tau > YEAR && !v.s.flags.badnews, rate: (v) => 0.15, once: 'badnews',
-    options: [
-      { label: '하루 쉰다', hint: '', go: (v) => ({ text: '창가에서 하루. 지구는 보이지 않았어요.', morale: -0.15, flag: 'badnews' }) },
-      { label: '답장을 쓴다', hint: '', go: (v) => ({ text: '긴 편지를 썼어요. 도착하면 다들 읽을 거예요.', morale: -0.1, flag: 'badnews' }) },
-    ],
-  },
-  {
     id: 'comet', cat: 'rock', title: '혜성이 항로 곁을 지나요',
     desc: (v) => '얼음 덩어리가 항로 가까이 지나가요. 지름 2 km. 물이 수십억 톤이에요.',
     src: '로제타 탐사선 67P 착륙 (2014); ' + SF('아마겟돈, 딥 임팩트'),

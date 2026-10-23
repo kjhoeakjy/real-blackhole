@@ -1,4 +1,4 @@
-// 사건 더: 이름 있는 동료, 그들(납치범), 상상 시나리오, 그리고 실제로 일어날 법한 몸·배의 일.
+// 사건 더: 이름 있는 동료, 외계인(납치범), 상상 시나리오, 그리고 실제로 일어날 법한 몸·배의 일.
 // 실제 기록에 바탕을 둔 것은 src 에 출처를, 상상은 '시나리오'라고 적는다. 결과는 숨겨진 확률로 굴린다.
 // fx: 카드가 열릴 때 또는 결과에 붙는 창밖 연출 이름 (UI 가 그린다).
 import { AU, DAY, YEAR, LY } from '../physics/constants.js';
@@ -68,12 +68,12 @@ export const MORE_EVENTS = [
   },
   {
     id: 'mate-memory', cat: 'sf', title: (v) => `${who(v)}이 기억을 되찾았어요`, fx: 'eyes',
-    desc: (v) => `${him(v)}은 그들의 배 안에서 깨어 있었대요. 빛, 길고 조용한 복도, 그리고 우리를 내려다보던 얼굴들. 손이 떨려요.`,
+    desc: (v) => `${him(v)}은 외계인의 배 안에서 깨어 있었대요. 빛, 길고 조용한 복도, 그리고 우리를 내려다보던 얼굴들. 손이 떨려요.`,
     src: IMAGINE,
     when: (v) => many(v) && v.s.tau > 30 * DAY && !v.s.flags.memory, rate: (v) => 0.15,
     options: [
-      { label: '끝까지 듣는다', hint: '밤이 길어질 거예요.', go: (v) => ({ text: '그들은 우리를 해치지 않았대요. 돌려보낼 곳을 고르는 것처럼 보였대요. 왜 여기였는지는 모르겠어요.', morale: 0.05, flag: 'memory', bond: 1 }) },
-      { label: '전부 기록한다', hint: '지구에서 누군가 읽을 거예요.', go: (v) => ({ text: '열두 쪽. 그들의 얼굴을 그려 달라고 했어요. 눈이 컸어요. 기록은 암호화해 두었어요.', flag: 'memory', morale: 0.02 }) },
+      { label: '끝까지 듣는다', hint: '밤이 길어질 거예요.', go: (v) => ({ text: '외계인은 우리를 해치지 않았대요. 돌려보낼 곳을 고르는 것처럼 보였대요. 왜 여기였는지는 모르겠어요.', morale: 0.05, flag: 'memory', bond: 1 }) },
+      { label: '전부 기록한다', hint: '지구에서 누군가 읽을 거예요.', go: (v) => ({ text: '열두 쪽. 외계인의 얼굴을 그려 달라고 했어요. 눈이 컸어요. 기록은 암호화해 두었어요.', flag: 'memory', morale: 0.02 }) },
       { label: '꿈이라고 한다', hint: '', go: (v) => ({ text: `${him(v)}은 그 뒤로 그 얘기를 하지 않았어요. 밤에 가끔 복도 불을 다 켜 놓아요.`, morale: -0.05, flag: 'memory' }) },
     ],
   },
@@ -108,25 +108,25 @@ export const MORE_EVENTS = [
   },
   {
     id: 'stowaway', cat: 'sf', title: '창고에서 사람이 나왔어요', fx: 'eyes',
-    desc: (v) => `물탱크 뒤에서. 수척하고 겁에 질렸어요. 우리처럼 끌려왔다가 그들이 떠날 때 이 배에 숨었대요. 식량 계산은 ${v.s.crewAlive}명 기준이에요.`,
+    desc: (v) => `물탱크 뒤에서. 수척하고 겁에 질렸어요. 우리처럼 끌려왔다가 외계인이 떠날 때 이 배에 숨었대요. 식량 계산은 ${v.s.crewAlive}명 기준이에요.`,
     src: IMAGINE,
     when: (v) => v.s.tau > 5 * DAY && v.s.tau < 400 * DAY && !v.s.flags.stowaway && v.ship.crew > 1, rate: (v) => 0.25,
     options: [
       { label: '받아들인다', hint: '먹는 입이 하나 늘어요. 손도 하나 늘고요.', go: (v) => { const [n, r] = newcomer(v); return { text: `전기 일을 할 줄 안대요. 동료 ${v.s.mates.length + 1}번이 됐어요. 식량표를 다시 썼어요.`, crewGain: 1, newMate: { name: n, role: r }, morale: 0.1, flag: 'stowaway' }; } },
-      { label: '격리실에 두고 지켜본다', hint: '병을 옮길 수도, 그들이 보낸 사람일 수도 있어요.', go: (v) => chance(0.8) ? (() => { const [n, r] = newcomer(v); return { text: `열흘 뒤 격리를 풀었어요. 동료 ${v.s.mates.length + 1}번은 그 뒤로 식탁 가장 끝에 앉아요.`, crewGain: 1, newMate: { name: n, role: r }, flag: 'stowaway' }; })() : { text: '사흘째 밤 격리실이 비어 있었어요. 에어록은 닫혀 있었고요. 아무도 설명하지 못했어요.', morale: -0.15, flag: 'contact' } },
+      { label: '격리실에 두고 지켜본다', hint: '병을 옮길 수도, 외계인이 보낸 사람일 수도 있어요.', go: (v) => chance(0.8) ? (() => { const [n, r] = newcomer(v); return { text: `열흘 뒤 격리를 풀었어요. 동료 ${v.s.mates.length + 1}번은 그 뒤로 식탁 가장 끝에 앉아요.`, crewGain: 1, newMate: { name: n, role: r }, flag: 'stowaway' }; })() : { text: '사흘째 밤 격리실이 비어 있었어요. 에어록은 닫혀 있었고요. 아무도 설명하지 못했어요.', morale: -0.15, flag: 'contact' } },
       { label: '구조 캡슐에 태워 내보낸다', hint: '캡슐엔 식량 한 달치가 있어요. 그 사람이 어떻게 될지는 몰라요.', go: (v) => ({ text: '캡슐이 멀어지는 걸 다 같이 봤어요. 아무도 저녁을 먹지 않았어요.', morale: -0.25, flag: 'stowaway' }) },
     ],
   },
   // ================= 그들 =================
   {
-    id: 'abductors', cat: 'sf', title: '그들이 돌아왔어요', fx: 'saucer',
+    id: 'abductors', cat: 'sf', title: '외계인이 돌아왔어요', fx: 'saucer',
     desc: (v) => '창밖에 납작한 어둠. 아래쪽 불빛이 그날 밤과 같은 순서로 깜빡여요. 레이더엔 아무것도 없어요.',
     src: IMAGINE + ' · 영감: 미지와의 조우 (1977)',
     when: (v) => v.s.tau > 60 * DAY && !v.s.flags.abductors, rate: (v) => 0.08,
     options: [
-      { label: '에어록을 연다', hint: '그들이 들어올 수도, 우리를 데려갈 수도 있어요.', go: (v) => { const r = R(); if (r > 0.93) return { death: '에어록이 열리자 빛이 들어왔어요. 배는 다음 날 텅 빈 채 발견됐을 거예요. 아무도 발견하지 않았겠지만.' }; if (r < 0.4) return { text: '아무도 들어오지 않았어요. 아침에 에어록 바닥에 상자가 있었어요. 우리 식량과 같은 포장. 석 달치.', food: 90, morale: 0.1, flag: 'abductors' }; if (r < 0.7) return { text: '빛이 들어왔고 다음 기억은 침대예요. 시계가 여섯 달 앞으로 가 있고, 창밖 별자리가 달라요. 지구가 훨씬 가까워요.', jump: 0.3, delay: 180 * DAY, flag: 'abductors', fx: 'flash' }; if (many(v) && r < 0.85) { who(v); return { text: `아침에 ${him(v)}의 침낭이 비어 있었어요. 그 사람 신발은 에어록 앞에 나란히 놓여 있었어요.`, crewLost: 1, lost: v._m, morale: -0.3, flag: 'abductors' }; } return { text: '아무 일도 없었어요. 그들은 한 시간 뒤 사라졌어요. 에어록은 밤새 열려 있었어요.', morale: -0.1, flag: 'abductors' }; } },
-      { label: '불을 다 끄고 숨는다', hint: '그들이 레이더에 안 잡힌다면 우리도 안 보일지 몰라요.', go: (v) => chance(0.7) ? { text: '두 시간을 어둠 속에서 보냈어요. 그들은 천천히 멀어졌어요.', morale: -0.05, flag: 'abductors' } : { text: '불을 꺼도 그들은 창 앞에 있었어요. 새벽에 사라졌어요. 선체 바깥에 손 자국 같은 것이 남았어요.', morale: -0.15, flag: 'abductors', flag2: 'contact' } },
-      { label: '착륙등으로 같은 순서를 돌려보낸다', hint: '인사일지 도발일지 몰라요.', go: (v) => chance(0.6) ? { text: '그들의 불빛이 멈췄다가 새 순서로 깜빡였어요. 세 번. 그리고 떠났어요. 그 순서를 적어 뒀어요.', morale: 0.15, flag: 'abductors', flag2: 'contact' } : { text: '불빛이 꺼졌어요. 배가 한 번 크게 흔들렸고 그들은 없었어요. 안테나가 휘었어요.', hull: -0.08, flag: 'abductors' } },
+      { label: '에어록을 연다', hint: '외계인이 들어올 수도, 우리를 데려갈 수도 있어요.', go: (v) => { const r = R(); if (r > 0.93) return { death: '에어록이 열리자 빛이 들어왔어요. 배는 다음 날 텅 빈 채 발견됐을 거예요. 아무도 발견하지 않았겠지만.' }; if (r < 0.4) return { text: '아무도 들어오지 않았어요. 아침에 에어록 바닥에 상자가 있었어요. 우리 식량과 같은 포장. 석 달치.', food: 90, morale: 0.1, flag: 'abductors' }; if (r < 0.7) return { text: '빛이 들어왔고 다음 기억은 침대예요. 시계가 여섯 달 앞으로 가 있고, 창밖 별자리가 달라요. 지구가 훨씬 가까워요.', jump: 0.3, delay: 180 * DAY, flag: 'abductors', fx: 'flash' }; if (many(v) && r < 0.85) { who(v); return { text: `아침에 ${him(v)}의 침낭이 비어 있었어요. 그 사람 신발은 에어록 앞에 나란히 놓여 있었어요.`, crewLost: 1, lost: v._m, morale: -0.3, flag: 'abductors' }; } return { text: '아무 일도 없었어요. 외계인은 한 시간 뒤 사라졌어요. 에어록은 밤새 열려 있었어요.', morale: -0.1, flag: 'abductors' }; } },
+      { label: '불을 다 끄고 숨는다', hint: '외계인이 레이더에 안 잡힌다면 우리도 안 보일지 몰라요.', go: (v) => chance(0.7) ? { text: '두 시간을 어둠 속에서 보냈어요. 외계인은 천천히 멀어졌어요.', morale: -0.05, flag: 'abductors' } : { text: '불을 꺼도 외계인은 창 앞에 있었어요. 새벽에 사라졌어요. 선체 바깥에 손 자국 같은 것이 남았어요.', morale: -0.15, flag: 'abductors', flag2: 'contact' } },
+      { label: '착륙등으로 같은 순서를 돌려보낸다', hint: '인사일지 도발일지 몰라요.', go: (v) => chance(0.6) ? { text: '외계인의 불빛이 멈췄다가 새 순서로 깜빡였어요. 세 번. 그리고 떠났어요. 그 순서를 적어 뒀어요.', morale: 0.15, flag: 'abductors', flag2: 'contact' } : { text: '불빛이 꺼졌어요. 배가 한 번 크게 흔들렸고 외계인은 없었어요. 안테나가 휘었어요.', hull: -0.08, flag: 'abductors' } },
     ],
   },
   {
@@ -142,7 +142,7 @@ export const MORE_EVENTS = [
   },
   {
     id: 'artifact', cat: 'sf', title: '화물칸에 낯선 물체가 있어요', fx: 'glow',
-    desc: (v) => '식량 상자 뒤에서 손바닥만 한 검은 물체가 울려요. 따뜻해요. 우리 것이 아니에요. 그들이 두고 간 것 같아요.',
+    desc: (v) => '식량 상자 뒤에서 손바닥만 한 검은 물체가 울려요. 따뜻해요. 우리 것이 아니에요. 외계인이 두고 간 것 같아요.',
     src: IMAGINE + ' · 영감: 2001 스페이스 오디세이',
     when: (v) => v.s.tau > 20 * DAY && !v.s.flags.artifact, rate: (v) => 0.1,
     options: [
@@ -158,7 +158,7 @@ export const MORE_EVENTS = [
     when: (v) => v.s.tau > 90 * DAY && !v.s.flags.traders, rate: (v) => 0.05,
     options: [
       { label: '머리카락 한 줌을 넣는다', hint: '우리에겐 흔한 것이에요.', go: (v) => ({ text: '빈 상자가 닫히고 물 상자가 열렸어요. 300리터. 분석기엔 그냥 물이에요. 아주 깨끗한.', water: 120, morale: 0.1, flag: 'traders', flag2: 'contact' }) },
-      { label: '가족 사진을 넣는다', hint: '', go: (v) => chance(0.5) ? { text: '그들은 사진을 오래 들여다봤어요. 물 상자가 열렸고, 다음 날 사진이 에어록에 돌아와 있었어요. 뒷면에 모르는 표식 하나.', water: 120, morale: 0.15, flag: 'traders', flag2: 'contact' } : { text: '사진은 가져갔고 물 상자는 닫힌 채 멀어졌어요.', morale: -0.1, flag: 'traders', flag2: 'contact' } },
+      { label: '가족 사진을 넣는다', hint: '', go: (v) => chance(0.5) ? { text: '외계인은 사진을 오래 들여다봤어요. 물 상자가 열렸고, 다음 날 사진이 에어록에 돌아와 있었어요. 뒷면에 모르는 표식 하나.', water: 120, morale: 0.15, flag: 'traders', flag2: 'contact' } : { text: '사진은 가져갔고 물 상자는 닫힌 채 멀어졌어요.', morale: -0.1, flag: 'traders', flag2: 'contact' } },
       { label: '아무것도 주지 않는다', hint: '', go: (v) => ({ text: '한 시간을 기다리다 떠났어요. 창에 물 상자 모양으로 물방울 자국이 남았어요.', flag: 'traders' }) },
     ],
   },

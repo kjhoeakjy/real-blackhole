@@ -139,7 +139,7 @@ export class TripMode {
   }
   _prologue() {
     const pr = this.prologue;
-    pr.querySelector('.lines').innerHTML = `<p>집 앞 골목에서 빛을 본 것이 마지막 기억이었다.</p><p class="faint">깨어 보니 바닥은 차가운 바위였고, 하늘 색이 달랐다.</p><p>그들은 떠나고 없었다.</p><p class="faint">바위 사이에 작은 우주선 한 척, 그 옆에 식량 상자가 쌓여 있었다.</p><p>지구까지의 거리는 조종석 화면에 적혀 있었다.</p>`;
+    pr.querySelector('.lines').innerHTML = `<p>집 앞 골목에서 빛을 본 것이 마지막 기억이었다.</p><p class="faint">깨어 보니 바닥은 차가운 바위였고, 하늘 색이 달랐다.</p><p>외계인은 떠나고 없었다.</p><p class="faint">바위 사이에 작은 우주선 한 척, 그 옆에 식량 상자가 쌓여 있었다.</p><p>지구까지의 거리는 조종석 화면에 적혀 있었다.</p>`;
     pr.classList.remove('hidden');
     const pc = pr.querySelector('canvas'); const t0 = performance.now(); cancelAnimationFrame(this._prRaf);
     const loop = () => { if (pr.classList.contains('hidden')) return; const dpr = Math.min(devicePixelRatio || 1, 1.5); if (pc.width !== Math.round(innerWidth * dpr)) { pc.width = Math.round(innerWidth * dpr); pc.height = Math.round(innerHeight * dpr); } drawAbduction(pc, (performance.now() - t0) / 1000); this._prRaf = requestAnimationFrame(loop); };
@@ -149,7 +149,7 @@ export class TripMode {
     ageEl.oninput = (e) => { this.age = Math.min(100, Math.max(1, +e.target.value || 30)); };
     pr.querySelector('#p-go').onclick = () => { pr.classList.add('hidden'); this._wake(); };
   }
-  // 창밖 연출: 유성·오로라·플레어·그들의 배… 몇 초 동안 fx 캔버스에 그린다
+  // 창밖 연출: 유성·오로라·플레어·외계인의 배… 몇 초 동안 fx 캔버스에 그린다
   _fx(name) {
     const cv = this.fx; cv.classList.remove('hidden');
     const dpr = Math.min(devicePixelRatio || 1, 1.5); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
@@ -201,7 +201,7 @@ export class TripMode {
     if (from.kind !== 'bh') { this.scene.classList.remove('hidden', 'lift'); this.sceneOn = true; this._drawScene(); }
     const kindText = { solar: '태양계', probe: '태양계 바깥', star: '별', bh: '블랙홀 곁', galaxy: '다른 은하' }[from.kind];
     this._card(`<div class="step">${icon('nav')} 현재 위치 · ${kindText}</div><div class="t">${esc(from.name)}</div>
-      <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '지평선 위로 그들의 배가 멀어지고 있었다. 바위 사이에 캡슐 한 척이 서 있었다.', probe: '우주복 안이었다. 옆에서 1977년에 떠난 탐사선이 조용히 돌고 있었고, 조금 떨어진 곳에 배가 있었다.', star: '낯선 별 아래 바위 벌판이었다. 바위 사이에 캡슐 한 척이 서 있었다.', galaxy: '별도 땅도 없는 어둠이었다. 창밖에 은하 하나가 하늘을 채우고 있었고, 배는 등 뒤에 있었다.', bh: '블랙홀의 빛 고리가 하늘을 채우고 있었다. 배는 지평선 바깥에 떠 있었다.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
+      <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '지평선 위로 외계인의 배가 멀어지고 있었다. 바위 사이에 캡슐 한 척이 서 있었다.', probe: '우주복 안이었다. 옆에서 1977년에 떠난 탐사선이 조용히 돌고 있었고, 조금 떨어진 곳에 배가 있었다.', star: '낯선 별 아래 바위 벌판이었다. 바위 사이에 캡슐 한 척이 서 있었다.', galaxy: '별도 땅도 없는 어둠이었다. 창밖에 은하 하나가 하늘을 채우고 있었고, 배는 등 뒤에 있었다.', bh: '블랙홀의 빛 고리가 하늘을 채우고 있었다. 배는 지평선 바깥에 떠 있었다.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
       <div class="opts">${opt(0, '우주선으로', '배 세 척 중 하나를 고른다')}</div>`, () => this._hangar());
     this.ctx.els.panel.classList.add('collapsed');
     this.ctx.els.scale.classList.add('hidden');
