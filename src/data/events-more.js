@@ -18,7 +18,7 @@ export const MORE_EVENTS = [
     src: 'ISS 승무원 생일 기록 (NASA 블로그); 남극 월동 기지의 생일 전통',
     when: many, rate: (v) => 0.4,
     options: [
-      { label: '케이크 비슷한 것을 만든다', hint: '설탕과 분말 달걀, 전기 오븐 20분. 식량을 조금 써요.', go: (v) => ({ text: `납작한 빵에 초 대신 손전등을 꽂았어요. ${him(v)}이 오래 웃었어요.`, food: -2, morale: 0.15, bond: 1 }) },
+      { label: '케이크 비슷한 것을 만든다', hint: '설탕과 분말 달걀, 전기 오븐 20분. 식량을 조금 써요.', go: (v) => ({ text: `납작한 빵에 초 대신 손전등을 꽂았어요. ${him(v)}이 사진을 찍어 두자고 했어요.`, food: -2, morale: 0.15, bond: 1 }) },
       { label: '하루 일을 쉬게 한다', hint: '정비 일정이 하루 밀려요.', go: (v) => chance(0.85) ? { text: `${him(v)}은 하루 종일 창가에 있었어요. 다음 날 두 배로 일했어요.`, morale: 0.1, bond: 1, delay: DAY } : { text: '그날 밤 필터 경보가 울렸어요. 쉬는 날은 없던 일이 됐어요.', morale: -0.03, delay: DAY } },
       { label: '그냥 지나간다', hint: '여기선 날짜가 큰 의미 없어요.', go: (v) => ({ text: `${him(v)}은 아무 말도 하지 않았어요. 저녁에 혼자 음악을 들었어요.`, morale: -0.05 }) },
     ],
@@ -29,7 +29,7 @@ export const MORE_EVENTS = [
     src: 'Mars-500 식량 분배 갈등 보고; 남극 월동 기지 식량 사고 사례',
     when: (v) => many(v) && v.s.tau > 90 * DAY, rate: (v) => 0.2,
     options: [
-      { label: '둘만 있을 때 묻는다', hint: '창피를 주지 않으면 돌아오는 게 많아요.', go: (v) => chance(0.7) ? { text: `${him(v)}은 울었어요. 침낭 밑에서 상자 두 개가 더 나왔어요. 다시 장부에 올렸어요.`, food: 20, morale: 0.05, bond: 1 } : { text: `${him(v)}은 아니라고 했어요. 다음 달 또 두 상자가 비었어요.`, food: -15, morale: -0.1 } },
+      { label: '둘만 있을 때 묻는다', hint: '창피를 주지 않으면 돌아오는 게 많아요.', go: (v) => chance(0.7) ? { text: `${him(v)}은 한참 말이 없다가 상자 두 개를 더 꺼내 왔어요. 다시 장부에 올렸어요.`, food: 20, morale: 0.05, bond: 1 } : { text: `${him(v)}은 아니라고 했어요. 다음 달 또 두 상자가 비었어요.`, food: -15, morale: -0.1 } },
       { label: '전원 앞에서 꺼낸다', hint: '공정하지만 사람 하나가 배에서 외톨이가 돼요.', go: (v) => chance(0.5) ? { text: '상자는 돌아왔어요. 그 사람은 그 뒤로 식탁에 앉지 않아요.', food: 25, morale: -0.15 } : { text: `${him(v)}이 먼저 사과했어요. 밤에 혼자 먹었대요. 무서워서. 식량 당번을 돌리기로 했어요.`, food: 25, morale: 0.05 } },
       { label: '모른 척한다', hint: '식량은 계속 줄어요.', go: (v) => ({ text: '석 달 뒤 상자 열 개가 더 비었어요.', food: -40, morale: -0.05 }) },
     ],
@@ -53,7 +53,7 @@ export const MORE_EVENTS = [
     options: [
       { label: '옆에 가서 같이 앉아 있는다', hint: '말은 안 해도 돼요. 시간이 걸려요.', go: (v) => chance(0.75) ? { text: `사흘째 밤에 ${him(v)}이 먼저 말했어요. 지구에 두고 온 개 이야기였어요.`, morale: 0.1, bond: 2 } : { text: '일주일을 옆에 있었어요. 조금 나아졌어요. 아주 조금.', morale: 0.02 } },
       { label: '의무실 약을 준다', hint: '항우울제는 몇 주 걸려요. 부작용으로 잠이 늘어요.', go: (v) => chance(0.6) ? { text: '한 달 뒤 식탁에 돌아왔어요. 예전보다 조용하지만.', morale: 0.05 } : { text: '약을 먹고 하루 열여섯 시간을 자요. 정비 일이 남은 사람들에게 돌아갔어요.', morale: -0.05, health: -0.03 } },
-      { label: '일을 더 맡긴다', hint: '바쁘면 생각이 줄어요. 안 통할 수도 있어요.', go: (v) => chance(0.5) ? { text: '재배실 당번을 맡겼어요. 싹이 나는 날 처음으로 웃었어요.', morale: 0.08 } : { text: '일을 던져 두고 다시 칸에 들어갔어요. 더 나빠졌어요.', morale: -0.12 } },
+      { label: '일을 더 맡긴다', hint: '바쁘면 생각이 줄어요. 안 통할 수도 있어요.', go: (v) => chance(0.5) ? { text: '재배실 당번을 맡겼어요. 싹이 난 날 처음으로 식탁에 나왔어요.', morale: 0.08 } : { text: '일을 던져 두고 다시 칸에 들어갔어요. 더 나빠졌어요.', morale: -0.12 } },
     ],
   },
   {
@@ -83,7 +83,7 @@ export const MORE_EVENTS = [
     src: 'ISS 결혼 (Malenchenko 2003); ' + SF('패신저스 (2016)'),
     when: (v) => v.s.flags.love && v.s.crewAlive >= 3 && !v.s.flags.wedding, rate: (v) => 0.4,
     options: [
-      { label: '주례를 본다', hint: '', go: (v) => ({ text: '세 문장짜리 주례였어요. 저장해 둔 샴페인 대신 재배실 토마토 주스. 배 안이 하루 밝았어요.', morale: 0.25, bond: 1, flag: 'wedding', food: -1 }) },
+      { label: '주례를 본다', hint: '', go: (v) => ({ text: '세 문장짜리 주례였어요. 샴페인 대신 재배실 토마토 주스. 그날은 다들 일을 쉬었어요.', morale: 0.25, bond: 1, flag: 'wedding', food: -1 }) },
     ],
   },
   {
@@ -92,7 +92,7 @@ export const MORE_EVENTS = [
     src: '남극·잠수함 사별 대처 보고',
     when: (v) => dead(v).length > 0 && v.s.tau - dead(v)[0].diedTau > YEAR && !v.s.flags.anniv, rate: (v) => 2,
     options: [
-      { label: '다 모여 이름을 부른다', hint: '', go: (v) => ({ text: '한 사람씩 기억 하나를 말했어요. 그 사람 칸을 재배실로 만들기로 했어요.', morale: 0.1, flag: 'anniv', bond: 1 }) },
+      { label: '다 모여 이름을 부른다', hint: '', go: (v) => ({ text: '한 사람씩 그 사람에 대한 기억 하나를 말했어요. 그 사람 칸을 재배실로 만들기로 했어요.', morale: 0.1, flag: 'anniv', bond: 1 }) },
       { label: '혼자 창가에 앉는다', hint: '', go: (v) => ({ text: '별이 그날처럼 많았어요.', morale: 0.02, flag: 'anniv' }) },
     ],
   },
@@ -125,8 +125,8 @@ export const MORE_EVENTS = [
     when: (v) => v.s.tau > 60 * DAY && !v.s.flags.abductors, rate: (v) => 0.08,
     options: [
       { label: '에어록을 연다', hint: '그들이 들어올 수도, 우리를 데려갈 수도 있어요.', go: (v) => { const r = R(); if (r < 0.4) return { text: '아무도 들어오지 않았어요. 아침에 에어록 바닥에 상자가 있었어요. 우리 식량과 같은 포장. 석 달치.', food: 90, morale: 0.1, flag: 'abductors' }; if (r < 0.7) return { text: '빛이 들어왔고 다음 기억은 침대예요. 시계가 여섯 달 앞으로 가 있고, 창밖 별자리가 달라요. 지구가 훨씬 가까워요.', jump: 0.3, delay: 180 * DAY, flag: 'abductors', fx: 'flash' }; if (many(v) && r < 0.85) { who(v); return { text: `아침에 ${him(v)}의 침낭이 비어 있었어요. 그 사람 신발은 에어록 앞에 나란히 놓여 있었어요.`, crewLost: 1, lost: v._m, morale: -0.3, flag: 'abductors' }; } return { text: '아무 일도 없었어요. 그들은 한 시간 뒤 사라졌어요. 에어록은 밤새 열려 있었어요.', morale: -0.1, flag: 'abductors' }; } },
-      { label: '불을 다 끄고 숨는다', hint: '그들이 레이더에 안 잡힌다면 우리도 안 보일지 몰라요.', go: (v) => chance(0.7) ? { text: '두 시간을 어둠 속에서 보냈어요. 그들은 천천히 멀어졌어요.', morale: -0.05, flag: 'abductors' } : { text: '불을 꺼도 그들은 창 앞에 있었어요. 새벽에 사라졐어요. 선체 바깥에 손 자국 같은 것이 남았어요.', morale: -0.15, flag: 'abductors', flag2: 'contact' } },
-      { label: '착륙등으로 같은 순서를 돌려보낸다', hint: '인사일지 도발일지 몰라요.', go: (v) => chance(0.6) ? { text: '그들의 불빛이 멈췼다가 새 순서로 깜빡였어요. 세 번. 그리고 떠났어요. 그 순서를 적어 뒀어요.', morale: 0.15, flag: 'abductors', flag2: 'contact' } : { text: '불빛이 꺼졌어요. 배가 한 번 크게 흔들렸고 그들은 없었어요. 안테나가 휘었어요.', hull: -0.08, flag: 'abductors' } },
+      { label: '불을 다 끄고 숨는다', hint: '그들이 레이더에 안 잡힌다면 우리도 안 보일지 몰라요.', go: (v) => chance(0.7) ? { text: '두 시간을 어둠 속에서 보냈어요. 그들은 천천히 멀어졌어요.', morale: -0.05, flag: 'abductors' } : { text: '불을 꺼도 그들은 창 앞에 있었어요. 새벽에 사라졌어요. 선체 바깥에 손 자국 같은 것이 남았어요.', morale: -0.15, flag: 'abductors', flag2: 'contact' } },
+      { label: '착륙등으로 같은 순서를 돌려보낸다', hint: '인사일지 도발일지 몰라요.', go: (v) => chance(0.6) ? { text: '그들의 불빛이 멈췄다가 새 순서로 깜빡였어요. 세 번. 그리고 떠났어요. 그 순서를 적어 뒀어요.', morale: 0.15, flag: 'abductors', flag2: 'contact' } : { text: '불빛이 꺼졌어요. 배가 한 번 크게 흔들렸고 그들은 없었어요. 안테나가 휘었어요.', hull: -0.08, flag: 'abductors' } },
     ],
   },
   {
@@ -135,9 +135,9 @@ export const MORE_EVENTS = [
     src: IMAGINE,
     when: (v) => v.s.tau > 30 * DAY && !v.s.flags.face, rate: (v) => 0.06,
     options: [
-      { label: '마주 본다', hint: '움직이지 않는 게 나을지도 몰라요.', go: (v) => chance(0.7) ? { text: '한참을 서로 봤어요. 그것이 먼저 고개를 조금 기울였어요. 그리고 뒤로 멀어져 사라졐어요.', morale: 0.05, flag: 'face', flag2: 'contact' } : { text: '그것이 손을 뻗어 내 헬멧을 건드렸어요. 산소 경보가 울렸어요. 안으로 뛰어들었어요.', health: -0.1, morale: -0.15, flag: 'face', flag2: 'contact' } },
+      { label: '마주 본다', hint: '움직이지 않는 게 나을지도 몰라요.', go: (v) => chance(0.7) ? { text: '한참을 서로 봤어요. 그것이 먼저 고개를 조금 기울였어요. 그리고 뒤로 멀어져 사라졌어요.', morale: 0.05, flag: 'face', flag2: 'contact' } : { text: '그것이 손을 뻗어 내 헬멧을 건드렸어요. 산소 경보가 울렸어요. 안으로 뛰어들었어요.', health: -0.1, morale: -0.15, flag: 'face', flag2: 'contact' } },
       { label: '눈을 감고 열까지 센다', hint: '환각이면 사라져요.', go: (v) => chance(0.5) ? { text: '열에 눈을 떴어요. 없었어요. 손목 카메라에는 아무것도 없었어요.', morale: -0.05, flag: 'face' } : { text: '열에 눈을 떴어요. 더 가까이 있었어요. 카메라에는 빛 번짐만 남았어요.', morale: -0.15, flag: 'face', flag2: 'contact' } },
-      { label: '손목 카메라를 켠다', hint: '증거가 남을지도 몰라요.', go: (v) => chance(0.3) ? { text: '찍혔어요. 흐리지만 눈 두 개가 분명해요. 그 사진은 식탁 위에 두지 않기로 했어요.', flag: 'face', flag2: 'contact', morale: 0.05 } : { text: '카메라를 드는 사이 사라졐어요. 사진엔 내 손만 있어요.', flag: 'face' } },
+      { label: '손목 카메라를 켠다', hint: '증거가 남을지도 몰라요.', go: (v) => chance(0.3) ? { text: '찍혔어요. 흐리지만 눈 두 개가 분명해요. 그 사진은 식탁 위에 두지 않기로 했어요.', flag: 'face', flag2: 'contact', morale: 0.05 } : { text: '카메라를 드는 사이 사라졌어요. 사진엔 내 손만 있어요.', flag: 'face' } },
     ],
   },
   {
@@ -201,7 +201,7 @@ export const MORE_EVENTS = [
     src: 'Skylab 3 (1973) 거미 Arabella·Anita 실험; ' + IMAGINE,
     when: (v) => v.s.tau > 10 * DAY && !v.s.flags.pet, rate: (v) => 0.1,
     options: [
-      { label: '먹이를 주고 키운다', hint: '식량이 아주 조금 줘요. 이름이 생겨요.', go: (v) => chance(0.85) ? { text: `이름은 ${pick(['아라벨라', '여섯이', '손님', '승객', '모리'])}. 조종실 천장에 집을 지었어요. 밤에 소리를 내요.`, food: -5, morale: 0.15, flag: 'pet' } : { text: '한 달 뒤 두 마리가 됐어요. 석 달 뒤 스무 마리. 창고를 다 뒤져 상자째 내보냈어요.', food: -40, morale: -0.05, flag: 'pet' } },
+      { label: '먹이를 주고 키운다', hint: '식량이 아주 조금 줘요. 이름이 생겨요.', go: (v) => chance(0.85) ? { text: `이름은 ${pick(['아라벨라', '여섯이', '손님', '승객', '모리'])}. 조종실 천장에 집을 지었어요. 밤이면 작은 소리를 내요.`, food: -5, morale: 0.15, flag: 'pet' } : { text: '한 달 뒤 두 마리가 됐어요. 석 달 뒤 스무 마리. 창고를 다 뒤져 상자째 내보냈어요.', food: -40, morale: -0.05, flag: 'pet' } },
       { label: '밀봉해 연구한다', hint: '', go: (v) => ({ text: '물도 공기도 없이 멀쩡해요. 지구 생물학자들이 좋아할 거예요.', flag: 'pet', morale: 0.05 }) },
       { label: '밖으로 내보낸다', hint: '', go: (v) => ({ text: '에어록이 열리자 가만히 떠올랐어요. 마지막까지 우리를 보고 있었어요.', morale: -0.05, flag: 'pet' }) },
     ],
@@ -218,7 +218,7 @@ export const MORE_EVENTS = [
   },
   {
     id: 'dream', cat: 'mind', title: '모두 같은 꿈을 꿨어요', fx: 'eyes',
-    desc: (v) => many(v) ? `아침 식탁에서 ${who(v)}이 꿈 얘기를 꺼냈고, 다들 숟가락을 멈췼어요. 같은 복도, 같은 빛, 같은 얼굴들. 같은 말: "돌아와."` : '같은 꿈이 사흘째예요. 긴 복도, 빛, 그리고 큰 눈. 마지막엔 늘 같은 말이에요. "돌아와."',
+    desc: (v) => many(v) ? `아침 식탁에서 ${who(v)}이 꿈 얘기를 꺼냈고, 다들 숟가락을 멈췄어요. 같은 복도, 같은 빛, 같은 얼굴들. 같은 말: "돌아와."` : '같은 꿈이 사흘째예요. 긴 복도, 빛, 그리고 큰 눈. 마지막엔 늘 같은 말이에요. "돌아와."',
     src: IMAGINE,
     when: (v) => v.s.flags.abductors || v.s.flags.memory || v.s.flags.face, rate: (v) => 0.15, once: 'dream', trigger: (v) => (v.s.flags.abductors || v.s.flags.memory) && chance(0.003),
     options: [
@@ -234,7 +234,7 @@ export const MORE_EVENTS = [
     when: (v) => v.s.tau > 30 * DAY && !v.s.flags.clock, rate: (v) => 0.05,
     options: [
       { label: '카메라 기록을 돌려 본다', hint: '', go: (v) => chance(0.5) ? { text: '여섯 시간 동안 모든 카메라가 같은 하얀 화면이에요. 그 앞뒤로 우리는 그냥 자고 있어요.', morale: -0.12, flag: 'clock', flag2: 'contact' } : { text: '컴퓨터 시계가 한 번 뒤로 갔다 돌아온 기록이 있어요. 소프트웨어 오류래요. 손목시계도요?', morale: -0.05, flag: 'clock' } },
-      { label: '시계를 맞추고 넘어간다', hint: '', go: (v) => ({ text: '맞췼어요. 그 뒤로 다들 손목시계를 두 개씩 차요.', flag: 'clock' }) },
+      { label: '시계를 맞추고 넘어간다', hint: '', go: (v) => ({ text: '맞췄어요. 그 뒤로 다들 손목시계를 두 개씩 차요.', flag: 'clock' }) },
     ],
   },
   {
@@ -253,7 +253,7 @@ export const MORE_EVENTS = [
     src: "1I/ʻOumuamua (2017) 관측: 길이 100–400 m, 비중력 가속 (Micheli 2018); " + IMAGINE,
     when: (v) => v.rAU() > 2 && !v.s.flags.oumuamua, rate: (v) => 0.05,
     options: [
-      { label: '가까이 가서 표면을 찍는다', hint: '연료와 열흘.', go: (v) => chance(0.7) ? { text: '금속처럼 반짝이는 면이 있었어요. 자연 바위일 수도 있어요. 사진 삼천 장.', fuel: -0.05, delay: 10 * DAY, morale: 0.15, flag: 'oumuamua' } : { text: '가까이 가자 바위가 천천히 돌아 우리 쪽에 평평한 면을 보였어요. 그 면은 거울처럼 우리 배를 비췼어요. 돌아왔어요.', fuel: -0.05, delay: 10 * DAY, morale: -0.05, flag: 'oumuamua', flag2: 'contact' } },
+      { label: '가까이 가서 표면을 찍는다', hint: '연료와 열흘.', go: (v) => chance(0.7) ? { text: '금속처럼 반짝이는 면이 있었어요. 자연 바위일 수도 있어요. 사진 삼천 장.', fuel: -0.05, delay: 10 * DAY, morale: 0.15, flag: 'oumuamua' } : { text: '가까이 가자 바위가 천천히 돌아 우리 쪽에 평평한 면을 보였어요. 그 면은 거울처럼 우리 배를 비췄어요. 돌아왔어요.', fuel: -0.05, delay: 10 * DAY, morale: -0.05, flag: 'oumuamua', flag2: 'contact' } },
       { label: '멀리서 관측만 한다', hint: '', go: (v) => ({ text: '사흘 동안 나란히 갔어요. 가스는 안 뿜는데 조금씩 빨라져요. 그러다 뒤로 멀어졌어요.', morale: 0.05, flag: 'oumuamua' }) },
     ],
   },
@@ -270,7 +270,7 @@ export const MORE_EVENTS = [
   // ================= 실제로 일어날 법한 일 =================
   {
     id: 'tvecho', cat: 'signal', title: (v) => `${tvYear(v)}년 방송이 잡혀요`,
-    desc: (v) => `지구에서 떠난 전파가 여기까지 오는 데 ${Math.round(v.earthDistAU() * AU / LY)}년. 라디오에 ${tvYear(v)}년의 방송이 들려요. 지구에선 벌써 오래된 소리예요. 여기선 지금이에요.`,
+    desc: (v) => `지구에서 떠난 전파가 여기까지 오는 데 ${Math.round(v.earthDistAU() * AU / LY)}년. 라디오에 ${tvYear(v)}년의 방송이 들려요. 지구에선 오래전 소리지만 여기에는 지금 도착했어요.`,
     src: '전파는 빛의 속도로 간다: 거리 N 광년 = N 년 전의 방송 (실제 물리)',
     when: (v) => { const ly = v.earthDistAU() * AU / LY; return ly > 1 && ly < 100 && !v.s.flags.noantenna; }, rate: (v) => 0.3, once: 'tvecho', trigger: (v) => { const ly = v.earthDistAU() * AU / LY; return ly > 1 && ly < 100 && !v.s.flags.noantenna && chance(0.002); },
     options: [
@@ -315,7 +315,7 @@ export const MORE_EVENTS = [
     src: 'Skylab 3 (1973) 거미 Arabella 실험',
     when: (v) => v.ship.eco && !v.s.flags.spider, rate: (v) => 0.3,
     options: [
-      { label: '둔다', hint: '진딧물을 잡아 줘요.', go: (v) => ({ text: '이름은 아라벨라 2세. 재배실 진딧물이 사라졌어요. 아침마다 안부를 물어요.', morale: 0.1, flag: 'spider' }) },
+      { label: '둔다', hint: '진딧물을 잡아 줘요.', go: (v) => ({ text: '이름은 아라벨라 2세. 재배실 진딧물이 사라졌어요. 아침마다 거미줄부터 확인해요.', morale: 0.1, flag: 'spider' }) },
       { label: '치운다', hint: '', go: (v) => ({ text: '치웠어요. 일주일 뒤 다른 구석에 줄이 있었어요.', flag: 'spider' }) },
     ],
   },
@@ -345,12 +345,12 @@ export const MORE_EVENTS = [
 export const SIGHTS = [
   { id: 's-meteor', cat: 'rock', fx: 'meteor', rate: (v) => v.rAU() < 6 ? 1.2 : 0.3, text: () => pick(['유성 하나가 창을 가로질렀어요. 소리는 없어요.', '먼지 알갱이가 선체에 부딪혀 창 모서리가 반짝였어요.', '유성 두 개가 나란히 지나갔어요.']), morale: 0.02 },
   { id: 's-aurora', cat: 'sun', fx: 'aurora', when: (v) => (v.rAU() > 4.8 && v.rAU() < 5.6) || v.earthDistAU() < 0.01, rate: (v) => 6, text: (v) => v.earthDistAU() < 0.01 ? '지구 극지방 위로 초록 오로라가 커튼처럼 흘러요.' : '목성의 극이 오로라로 빛나요. 지구 것의 수백 배 밝아요.', morale: 0.05 },
-  { id: 's-flare', cat: 'sun', fx: 'flash', when: (v) => v.rAU() < 3, rate: (v) => 0.8, text: () => '태양 가장자리에서 플레어가 터졐어요. 창 필터가 자동으로 어두워졌어요.', morale: 0.01 },
+  { id: 's-flare', cat: 'sun', fx: 'flash', when: (v) => v.rAU() < 3, rate: (v) => 0.8, text: () => '태양 가장자리에서 플레어가 터졌어요. 창 필터가 자동으로 어두워졌어요.', morale: 0.01 },
   { id: 's-comet', cat: 'rock', fx: 'comet', rate: (v) => 0.25, text: () => '혜성 하나가 긴 꼬리를 늘이고 지나가요. 꼬리는 태양 반대쪽을 가리켜요.', morale: 0.05 },
   { id: 's-zodiac', cat: 'sun', fx: 'glow', when: (v) => v.rAU() < 3 && v.rAU() > 0.5, rate: (v) => 0.4, text: () => '황도광. 태양 둘레 먼지가 비추는 희미한 빛이 창 아래쪽을 채워요.', morale: 0.02 },
   { id: 's-lightning', cat: 'sun', fx: 'lightning', when: (v) => v.rAU() > 4.8 && v.rAU() < 5.6, rate: (v) => 8, text: () => '목성 밤쪽 구름에서 번개가 쳐요. 하나가 지구 번개 천 개 밝기예요.', morale: 0.03 },
   { id: 's-eclipse', cat: 'earth', fx: 'dim', when: (v) => v.earthDistAU() < 0.02 && v.s.f > 0.5, rate: (v) => 4, text: () => '달이 태양을 가렸어요. 두 분 동안 코로나만 보였어요.', morale: 0.05 },
   { id: 's-milky', cat: 'nav', fx: 'stars', when: (v) => v.rAU() > 100, rate: (v) => 0.3, text: () => '불을 다 끄고 창밖을 봤어요. 은하수가 머리 위에서 발 아래까지 이어져요.', morale: 0.05 },
-  { id: 's-eyes', cat: 'sf', fx: 'eyes', when: (v) => v.s.flags.contact, rate: (v) => 0.3, text: () => pick(['창밖 어둠 속에 빛 두 점이 나란히 떠 있다가 사라졐어요.', '뒤쪽 카메라에 불빛 하나가 따라오고 있어요. 레이더엔 없어요.']), morale: -0.03 },
+  { id: 's-eyes', cat: 'sf', fx: 'eyes', when: (v) => v.s.flags.contact, rate: (v) => 0.3, text: () => pick(['창밖 어둠 속에 빛 두 점이 나란히 떠 있다가 사라졌어요.', '뒤쪽 카메라에 불빛 하나가 따라오고 있어요. 레이더엔 없어요.']), morale: -0.03 },
   { id: 's-earthrise', cat: 'earth', fx: 'earth', when: (v) => v.earthDistAU() < 0.05 && v.s.f > 0.5 && !v.s.flags.erise, rate: (v) => 40, text: (v) => { v.s.flags.erise = true; return '창 아래쪽에서 파란 호가 올라와요. 구름, 바다, 그리고 밤쪽의 도시 불빛.'; }, morale: 0.15 },
 ];
