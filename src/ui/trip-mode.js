@@ -100,7 +100,7 @@ export class TripMode {
     const n = this.starts().length;
     this.root = el(`<div>
       <div class="section"><div class="eyebrow">지금 이 순간의 우주</div><div class="title-lg">지구로 돌아가기</div>
-        <p class="note" style="margin-top:6px">납치됐다가 우주 어딘가에서 눈을 떠요. 어디일지는 고를 수 없어요. 배를 타면 시간이 흐르고, 나이를 먹고, 사건이 끼어들어요. 그때마다 고르세요. 거리·속도·위험은 전부 실제 측정값이에요.</p></div>
+        <p class="note" style="margin-top:6px">납치된 뒤 우주 어딘가에서 눈을 뜬다. 어디인지는 고를 수 없다. 배에 오르면 시간이 흐르고 나이가 들고 사건이 끼어든다. 그때마다 고른다. 거리·속도·위험은 전부 실제 측정값.</p></div>
       <div class="section">
         <div class="row"><button class="btn primary block" id="t-go">처음부터</button></div>
         <p class="note tiny" style="margin-top:8px">출발지 ${n}곳 중 하나: 달·행성·위성, 탐사선 곁, 가까운 별, 성운, 블랙홀 곁, 다른 은하.</p>
@@ -122,7 +122,7 @@ export class TripMode {
   }
   _prologue() {
     const pr = this.prologue;
-    pr.querySelector('.lines').innerHTML = `<p>눈을 떠요.</p><p class="faint">마지막 기억은 집 앞 골목, 그리고 머리 위에서 내려온 빛.</p><p>여긴 지구가 아니에요.</p><p class="faint">그들은 떠났어요. 남긴 건 우주선 한 척과 식량뿐.</p><p>지구로 돌아가야 해요.</p>`;
+    pr.querySelector('.lines').innerHTML = `<p>눈을 뜬다.</p><p class="faint">마지막 기억은 집 앞의 길, 그리고 하늘에서 내려온 빛.</p><p>여기는 지구가 아니다.</p><p class="faint">그들은 떠났다. 남은 것은 우주선 한 척과 식량.</p><p>지구로 돌아가야 한다.</p>`;
     pr.classList.remove('hidden');
     this.ctx.els.panel.classList.add('collapsed');
     const ageEl = pr.querySelector('#p-age'); ageEl.value = this.age;
@@ -142,8 +142,8 @@ export class TripMode {
     if (from.kind !== 'bh') { this.scene.classList.remove('hidden', 'lift'); this.sceneOn = true; this._drawScene(); }
     const kindText = { solar: '태양계', probe: '태양계 바깥', star: '별', bh: '블랙홀 곁', galaxy: '다른 은하' }[from.kind];
     this._card(`<div class="step">${icon('nav')} 눈을 뜬 곳 · ${kindText}</div><div class="t">${esc(from.name)}</div>
-      <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '그들의 배는 지평선 위에서 멀어지고, 바위 사이에 캡슐 한 척이 서 있어요.', probe: '우주복 안이에요. 옆에는 1977년에 떠난 탐사선이 조용히 돌고, 조금 떨어진 곳에 배가 기다려요.', star: '낯선 별 아래 바위 벌판. 바위 사이에 캡슐 한 척이 서 있어요.', galaxy: '별도 땅도 없는 깊은 어둠. 창밖에 은하 하나가 하늘을 채우고, 배는 이미 내 뒤에 있어요.', bh: '블랙홀의 빛 고리가 하늘을 채워요. 배는 지평선 바깥에 떠 있어요.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
-      <div class="opts">${opt(0, '우주선으로', '식량 상자 옆에 배 세 척의 열쇠가 있어요')}</div>`, () => this._hangar());
+      <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '지평선 위로 그들의 배가 멀어진다. 바위 사이에 캡슐 한 척.', probe: '우주복 안이다. 옆에는 1977년에 떠난 탐사선이 조용히 돌고, 조금 떨어진 곳에 배가 기다린다.', star: '낯선 별 아래 바위 벌판. 바위 사이에 캡슐 한 척.', galaxy: '별도 땅도 없는 깊은 어둠. 창밖에 은하 하나가 하늘을 채우고, 배는 이미 등 뒤에 있다.', bh: '블랙홀의 빛 고리가 하늘을 채운다. 배는 지평선 바깥에 떠 있다.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
+      <div class="opts">${opt(0, '우주선으로', '배 세 척 중 하나를 고른다')}</div>`, () => this._hangar());
     this.ctx.els.panel.classList.add('collapsed');
     this.ctx.els.scale.classList.add('hidden');
     this.ctx.setHint('');
@@ -176,14 +176,14 @@ export class TripMode {
         const hint = res.inside ? '사건의 지평선 안이에요. 빛도 못 나오니 어떤 배도 못 나와요.' : `머리와 발이 받는 중력이 ${dg < 1e-3 ? '거의 같아요' : `${dg >= 1e4 ? fmtSci(dg, 2) : dg.toPrecision(3)} g 만큼 달라요`}. 사람은 50 s⁻² 쯤에서 의식을 잃고 1000 s⁻² 에서 몸이 둘로 갈라져요. 무거운 블랙홀일수록 지평선 가까이가 오히려 부드러워요.`;
         return opt(i, `${name} · ${fmtKm(r * rs(Mkg))}`, `${r.toFixed(2).replace(/\.?0+$/, '')} r_s`, hint);
       }).join('');
-      this._card(`<div class="step">${icon('bh')} 출발 · ${esc(bh.short)}</div><div class="t">어디서 엔진을 켤까요</div>
+      this._card(`<div class="step">${icon('bh')} 출발 · ${esc(bh.short)}</div><div class="t">어디서 엔진을 켤 것인가</div>
         <div class="d">질량 ${fmtSolar(bh.mass)}, 지평선 지름 ${fmtKm(2 * horizons(chi).rPlus * rs(Mkg) / 2)}. 가까울수록 머리와 발에 걸리는 중력이 달라요.</div>
         <div class="opts">${opts}</div><div class="src">조석 기울기 2GM/r³ (커 축 위 정확식)</div>`, (i) => { this.bhLogR = BH_STARTS[i][0]; this._bhChosen = true; this.ctx.showBH(false); this._hangar(); });
       if (!this.ctx.bhOn) { this.ctx.showBH(true); this.ctx.bh.setBH(bh, { inc: bh.inc ?? 75, dist: 'auto' }); this.ctx.bh.animate = true; this.ctx.bh.clearFall(); }
       return;
     }
     const ships = SHIPS.map((s, i) => { const t = planReturn({ distM, v: s.v, age: this.age }); return opt(i, `${s.name} · ${fmtDur(t.tau)}${t.gamma > 1.02 ? ` (지구 시계 ${fmtDur(t.tEarth)})` : ''}`, `${s.tag} · ${s.spec}`, s.desc); }).join('');
-    this._card(`<div class="step">${icon('nav')} 격납고</div><div class="t">무엇을 타고 갈까요</div>
+    this._card(`<div class="step">${icon('nav')} 출발</div><div class="t">무엇을 타고 갈 것인가</div>
       <div class="d">지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)} 걸려요.</div>
       <div class="opts">${ships}</div>`, (i) => this._board(SHIPS[i]));
   }
@@ -261,7 +261,7 @@ export class TripMode {
     const dist = v.distM * (1 - s.f);
     this.interior.classList.remove('on');
     const head = (s.arrived ? art('earth') : art('end')) + (s.arrived
-      ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔어요</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.gamma > 1.05 ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
+      ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔다</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.gamma > 1.05 ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
       : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`);
     const kv = `<div class="stats">
       <div><b class="num">${fmtDur(s.tau)}</b><span>배에서 보낸 시간</span></div>
@@ -272,7 +272,7 @@ export class TripMode {
       <div><b class="num">${s.flags.contact ? '있었어요' : '없었어요'}</b><span>설명 못 한 일</span></div>
     </div>`;
     this._card(`${head}${kv}<div class="section-title" style="margin-top:18px">지나온 길</div><ul class="life">${rows}</ul>
-      <div class="opts" style="margin-top:16px">${opt(0, '다시 눈 뜨기', '다른 곳에서, 다른 확률로')}</div>`, () => this._setup(true));
+      <div class="opts" style="margin-top:16px">${opt(0, '다시 시작', '다른 곳에서 눈을 뜬다')}</div>`, () => this._setup(true));
     this._hud();
     this._panelLog();
   }
