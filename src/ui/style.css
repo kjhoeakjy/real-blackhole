@@ -420,3 +420,21 @@ details.refs li { margin: 2px 0; }
 @keyframes ping { 0% { transform: scale(.3); opacity: .8; } 100% { transform: scale(1.6); opacity: 0; } }
 @keyframes pulse { to { background-position: 60px 0; } }
 @media (prefers-reduced-motion: reduce) { #card, #card *, #cockpit .frame { animation: none !important; } }
+
+/* ---------- 항해 중 카드: 양쪽으로 나눠 가운데 우주가 보이게 ---------- */
+#card.split { left: 0; right: 0; top: 150px; bottom: 120px; width: auto; max-height: none; transform: none !important; background: transparent; border: 0; box-shadow: none; padding: 0 18px; overflow: visible; display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; pointer-events: none; animation: fadeIn .35s ease !important; }
+#card.split::before { display: none; }
+#card.split .l, #card.split .r { width: min(400px, 40vw); max-height: 100%; overflow-y: auto; pointer-events: auto; border: 1px solid var(--line-2); border-radius: 18px; background: rgba(10,12,17,.9); padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,.5); position: relative; scrollbar-width: thin; }
+#card.split .l::before, #card.split .r::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 2px; background: var(--cat); opacity: .9; border-radius: 18px 18px 0 0; }
+#card.split .l { animation: slideL .4s ease; } #card.split .r { animation: slideR .4s ease; }
+#card.split .art { margin: -18px -20px 14px; }
+#card.split .opts { margin-top: 10px; }
+#card.split .r .step { color: var(--text-3); }
+#card.split .d.result { font-size: 18px; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideL { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes slideR { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+#card.split[data-cat="fire"], #card.split[data-cat="air"], #card.split[data-cat="water"], #card.split[data-cat="power"], #card.split[data-cat="rock"] { animation: fadeIn .35s ease !important; }
+#card.split[data-cat="fire"] .l, #card.split[data-cat="air"] .l, #card.split[data-cat="water"] .l, #card.split[data-cat="power"] .l, #card.split[data-cat="rock"] .l { animation: slideL .4s ease, shakeX .5s ease .1s; }
+@keyframes shakeX { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@media (max-width: 860px) { #card.split { top: 150px; bottom: 150px; flex-direction: column; gap: 10px; padding: 0 12px; overflow-y: auto; pointer-events: auto; } #card.split .l, #card.split .r { width: 100%; max-height: none; padding: 14px 16px; } #card.split .art { margin: -14px -16px 10px; } }

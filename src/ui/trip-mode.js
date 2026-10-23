@@ -164,13 +164,13 @@ export class TripMode {
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; this._parts = null; }
     cv.classList.remove('hidden');
     const g = cv.getContext('2d'); g.clearRect(0, 0, W, H);
-    const v = this.voy, sp = this.paused ? 0 : (0.002 + Math.min(0.05, v.beta * 0.25)) * this.speed;
-    if (!this._parts) this._parts = Array.from({ length: 60 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
+    const v = this.voy, sp = this.paused ? 0 : Math.min(0.09, (0.002 + Math.min(0.05, v.beta * 0.25)) * Math.sqrt(this.speed));
+    if (!this._parts) this._parts = Array.from({ length: 90 }, () => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() }));
     for (const p of this._parts) {
       p.z -= sp; if (p.z <= 0.02) { p.x = Math.random() * 2 - 1; p.y = Math.random() * 2 - 1; p.z = 1; }
       const k = 0.5 / p.z, x = W / 2 + p.x * k * W * 0.6, y = H / 2 + p.y * k * H * 0.6;
       const k2 = 0.5 / (p.z + sp * 3), x2 = W / 2 + p.x * k2 * W * 0.6, y2 = H / 2 + p.y * k2 * H * 0.6;
-      g.strokeStyle = `rgba(220,230,255,${0.12 + 0.5 * (1 - p.z)})`; g.lineWidth = 1 + (1 - p.z) * 1.5;
+      g.strokeStyle = `rgba(220,230,255,${0.08 + 0.35 * (1 - p.z)})`; g.lineWidth = 0.8 + (1 - p.z) * 1.2;
       g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
     }
   }
@@ -277,6 +277,7 @@ export class TripMode {
   }
   _card(html, onPick, onHint = null) {
     clearTimeout(this._resumeT); this.card.onclick = null;
+    if (!html.startsWith('<div class="l">')) this.card.classList.remove('split');
     this.card.innerHTML = html;
     this.card.classList.remove('hidden');
     this.card.scrollTop = 0;
@@ -291,8 +292,9 @@ export class TripMode {
     this.cockpit.classList.toggle('alert', ALERT.has(p.ev.cat));
     const m = v._m && v._m.alive && ['crew', 'mind', 'med', 'rock', 'sf'].includes(p.ev.cat) && (p.title.includes(v._m.name) || p.desc.includes(v._m.name)) ? v._m : null;
     const who = m ? `<div class="who"><i style="--h:${hue(m.name)}">${esc(m.name.replace(/\D/g, '') || m.name[0])}</i><span>${esc(m.name)}<em>${esc(m.role)}</em></span></div>` : '';
-    const html = `${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div>${who}<div class="d">${esc(p.desc)}</div>
-      <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
+    const html = `<div class="l">${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div>${who}<div class="d">${esc(p.desc)}</div><div class="src">${esc(p.ev.src)}</div></div>
+      <div class="r"><div class="step">선택</div><div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div></div>`;
+    this.card.classList.add('split');
     this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });
   }
   _pick(i) {
@@ -306,7 +308,8 @@ export class TripMode {
     const [catName] = CAT[r.cat] || CAT.nav;
     if (r.fx) this._fx(r.fx);
     this.card.dataset.cat = r.cat; this.cockpit.classList.remove('alert');
-    this.card.innerHTML = `${art(r.cat, this._lastEvId)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
+    this.card.classList.add('split');
+    this.card.innerHTML = `<div class="l">${art(r.cat, this._lastEvId)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div></div><div class="r"><div class="step">결과</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div></div>`;
     this.card.classList.remove('hidden');
     const hold = Math.min(5200, 1600 + r.text.length * 45);
     this.card.querySelector('.timer i').style.transitionDuration = `${hold}ms`;
@@ -328,7 +331,7 @@ export class TripMode {
     if (s.arrived) { this.landing.classList.remove('hidden'); requestAnimationFrame(() => this.landing.classList.add('on')); }
     const rows = s.log.map((e) => `<li class="${e.cat}"><i style="--cat:${(CAT[e.cat] || CAT.nav)[1]}">${icon(e.cat)}</i><div><div class="w">${fmtAgo(e.tau)}</div>${esc(e.text)}</div></li>`).join('');
     const dist = v.distM * (1 - s.f);
-    this.interior.classList.remove('on'); this.amb.classList.add('hidden'); this.cockpit.classList.remove('alert'); this.card.dataset.cat = s.arrived ? 'earth' : 'end';
+    this.interior.classList.remove('on'); this.amb.classList.add('hidden'); this.cockpit.classList.remove('alert'); this.card.dataset.cat = s.arrived ? 'earth' : 'end'; this.card.classList.remove('split');
     const head = (s.arrived ? art('earth') : art('end')) + (s.arrived
       ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔다</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.tEarth() - s.tau > YEAR ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
       : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`);
