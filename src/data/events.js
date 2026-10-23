@@ -5,6 +5,7 @@ import { AU, DAY, YEAR, c } from '../physics/constants.js';
 
 import { R, chance, U, pick, hours, fmtDelay, SF, IMAGINE, who, him } from './ev-util.js';
 import { MORE_EVENTS, SIGHTS } from './events-more.js';
+import { INTERSTELLAR_EVENTS } from './events-interstellar.js';
 export { SIGHTS };
 
 export const EVENTS = [
@@ -625,4 +626,4 @@ export const SF_EVENTS = [
     ],
   },
 ];
-EVENTS.push(...SF_EVENTS, ...MORE_EVENTS);
+EVENTS.push(...SF_EVENTS, ...MORE_EVENTS, ...INTERSTELLAR_EVENTS);

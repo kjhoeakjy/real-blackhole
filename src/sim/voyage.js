@@ -53,7 +53,7 @@ export class Voyage {
   earthDistAU() { return this.distM * (1 - this.s.f) / AU; }
   commDelay() { return this.distM * (1 - this.s.f) / c; }
   remaining() { return this.distM * (1 - this.s.f) / (this.v * this.gamma); } // 배 시계로 남은 시간(s)
-  tEarth() { return this.s.tau * this.gamma; }
+  tEarth() { return this.s.tau * this.gamma + (this.s.earthExtra || 0); }   // 지구 시계: 상대론 + 시나리오(웜홀·블랙홀 곁)로 더 흐른 시간
   get done() { return !this.s.alive || this.s.arrived; }
   // 동료: 살아 있는 사람 중 하나 (없으면 null). 사건 글에 이름을 쓰기 위해
   alive() { return this.s.mates.filter((m) => m.alive); }
@@ -172,7 +172,9 @@ export class Voyage {
     if (r.crewLost) { const names = this.loseMate(r.crewLost, r.lost || null); if (names.length && !r.text?.includes(names[0])) this._log('crew', `${names.join(', ')}을(를) 잃었어요.`); }
     if (r.crewGain) { if (r.newMate) this.addMate(r.newMate.name, r.newMate.role); else s.crewAlive += r.crewGain; }
     if (r.bond) for (const m of this.alive()) m.bond += r.bond;
-    if (r.jump) s.f = Math.min(1, s.f + (1 - s.f) * r.jump);   // 남은 거리의 일부를 한 번에 (시나리오)
+    if (r.jump) s.f = Math.max(0, Math.min(1, s.f + (1 - s.f) * r.jump));   // 남은 거리의 일부를 한 번에, 음수면 멀어짐 (시나리오)
+    if (r.earthExtra) s.earthExtra = (s.earthExtra || 0) + r.earthExtra;
+    if (r.hints) s.hintBonus = (s.hintBonus || 0) + r.hints;
     if (r.hib != null) { s.hib = r.hib; if (r.hib) s.hibHalf = false; }
     if (r.hibHalf) { s.hibHalf = true; s.hib = false; }
     if (r.flag) s.flags[r.flag] = true;

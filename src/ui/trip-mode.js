@@ -55,9 +55,10 @@ const PIC = {
   rock: '<svg viewBox="0 0 160 100"><path d="M40 60l18-30 34-6 28 22-10 32-40 10z" fill="#2a2420"/><path d="M58 30l8 22-20 10z" fill="#3a332c"/><circle cx="100" cy="56" r="6" fill="#1a1612"/></svg>',
   earth: '<svg viewBox="0 0 160 100"><circle cx="80" cy="110" r="70" fill="#3f7fe0"/><path d="M30 80q30-30 60-10t50-10" stroke="#8fd1a8" stroke-width="10" fill="none" opacity=".6"/><circle cx="80" cy="110" r="70" fill="none" stroke="#bfe6ff" stroke-width="3" opacity=".5"/></svg>',
   plant: '<svg viewBox="0 0 160 100"><path d="M80 95V50" stroke="#7fd1a8" stroke-width="3"/><path d="M80 70q-30-10-28-40 28 6 28 40zM80 60q30-14 30-42-30 8-30 42z" fill="#2c6b50"/><circle cx="80" cy="48" r="5" fill="#bfe6ff" opacity=".6"/></svg>',
+  bh: '<svg viewBox="0 0 160 100"><defs><radialGradient id="bhg"><stop offset="0" stop-color="#ffd9a0"/><stop offset="1" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient></defs><ellipse cx="90" cy="60" rx="62" ry="10" fill="none" stroke="url(#bhg)" stroke-width="6"/><circle cx="90" cy="60" r="26" fill="#000" stroke="#ffd9a0" stroke-width="2"/><path d="M28 60a62 10 0 0 0 124 0" fill="none" stroke="#ffe9c8" stroke-width="3"/></svg>',
   sun: '<svg viewBox="0 0 160 100"><circle cx="40" cy="100" r="60" fill="#ffb347"/><circle cx="40" cy="100" r="70" fill="none" stroke="#ffd56b" stroke-width="2" opacity=".5"/><path d="M90 60q20-30 40-10" stroke="#ffd56b" stroke-width="3" fill="none"/></svg>',
 };
-const PIC_BY_ID = { abductors: 'saucer', traders: 'saucer', bigship: 'saucer', twin: 'saucer', 'window-face': 'alien', 'mate-memory': 'alien', dream: 'alien', stowaway: 'crew', pod: 'pod', derelict: 'pod', whale: 'alien', comet: 'comet', 's-comet': 'comet', oumuamua: 'rock', belt: 'rock', micro: 'rock', debris: 'rock', dust: 'rock', reentry: 'earth', seeds: 'plant', eco: 'plant', spider: 'plant', spe: 'sun', 'solar-ship': 'sun', artifact: 'alien', beacon: 'saucer', dyson: 'saucer' };
+const PIC_BY_ID = { wormhole: 'bh', gargantua: 'bh', miller: 'bh', 'ghost-ship': 'saucer', mann: 'pod', 'future-self': 'saucer', abductors: 'saucer', traders: 'saucer', bigship: 'saucer', twin: 'saucer', 'window-face': 'alien', 'mate-memory': 'alien', dream: 'alien', stowaway: 'crew', pod: 'pod', derelict: 'pod', whale: 'alien', comet: 'comet', 's-comet': 'comet', oumuamua: 'rock', belt: 'rock', micro: 'rock', debris: 'rock', dust: 'rock', reentry: 'earth', seeds: 'plant', eco: 'plant', spider: 'plant', spe: 'sun', 'solar-ship': 'sun', artifact: 'alien', beacon: 'saucer', dyson: 'saucer' };
 const ALERT = new Set(['fire', 'air', 'water', 'power', 'rock']);
 const hue = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const PIC_BY_CAT = { crew: 'crew', rock: 'rock', earth: 'earth', sun: 'sun', sf: 'alien' };
@@ -299,6 +300,7 @@ export class TripMode {
     this._lastEvId = v.pending?.ev.id;
     const r = v.choose(i);
     if (!r) return;
+    if (v.s.hintBonus) { this.hints += v.s.hintBonus; v.s.hintBonus = 0; }
     this._panelLog();
     // 결과 문장을 잠깐 보여주고 저절로 이어진다 (누르면 바로)
     const [catName] = CAT[r.cat] || CAT.nav;
@@ -328,7 +330,7 @@ export class TripMode {
     const dist = v.distM * (1 - s.f);
     this.interior.classList.remove('on'); this.amb.classList.add('hidden'); this.cockpit.classList.remove('alert'); this.card.dataset.cat = s.arrived ? 'earth' : 'end';
     const head = (s.arrived ? art('earth') : art('end')) + (s.arrived
-      ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔다</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.gamma > 1.05 ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
+      ? `<div class="step">${icon('earth')} 지구</div><div class="t">돌아왔다</div><div class="d">${esc(v.from.name)}에서 ${fmtDur(s.tau)}. ${v.tEarth() - s.tau > YEAR ? `지구는 ${fmtDur(v.tEarth())}이 지났어요. ` : ''}${Math.floor(s.age)}세, 지구 날짜로 ${v.earthDate()}.</div>`
       : `<div class="step">${icon('end')} 인생 요약</div><div class="t">${Math.floor(s.age)}세, ${fmtDist(dist)} 남은 곳에서</div><div class="d">${esc(s.death.text)}</div>`);
     const kv = `<div class="stats">
       <div><b class="num">${fmtDur(s.tau)}</b><span>배에서 보낸 시간</span></div>
