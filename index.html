@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>실제 블랙홀 — 우주 지도, 광선추적, 떨어뜨리기</title>
+<meta name="description" content="실제 측정값으로 만든 블랙홀 체험. 지금 이 순간의 태양계에서 은하 너머까지 지도를 따라가고, 일반상대론 광선추적으로 블랙홀을 보고, 실제 물체를 떨어뜨려 분해되는 시간을 맞혀 보세요.">
+<meta property="og:title" content="실제 블랙홀">
+<meta property="og:description" content="실제 측정값·논문 수치로 만든 블랙홀 체험">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="src/ui/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23e9a65b' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23000'/%3E%3C/svg%3E">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="stage">
+  <canvas id="map-canvas"></canvas>
+  <canvas id="bh-canvas" class="hidden"></canvas>
+  <div id="labels"></div>
+  <div id="vignette"></div>
+</div>
+<div id="flash"></div>
+
+<header id="top">
+  <div id="brand"><span class="mark">실제 블랙홀</span><span class="sub">Real black holes</span></div>
+  <nav id="tabs">
+    <button data-mode="map" class="active">지도</button>
+    <button data-mode="view">보기</button>
+    <button data-mode="drop">떨어뜨리기</button>
+    <button data-mode="build">만들기</button>
+  </nav>
+  <div class="spacer"></div>
+  <div id="clock"><span class="dot"></span><span class="num" id="clock-text">—</span></div>
+  <button id="live-btn">실시간 ·</button>
+</header>
+
+<aside id="panel"><div id="panel-body"></div></aside>
+<button id="panel-toggle" title="패널 열기">☰</button>
+
+<div id="scale" class="hidden"></div>
+<div id="card" class="hidden"></div>
+<div id="hint"></div>
+
+<div id="hud">
+  <div class="tau"><div class="lab">물체의 시계 · 고유시간</div><div class="big num" id="hud-tau">0</div></div>
+  <div class="event" id="hud-event"><div class="t"></div><div class="s"></div></div>
+  <div class="readout">
+    <div><div class="l">중심까지</div><div class="v num" id="hud-r">—</div></div>
+    <div><div class="l">조석 기울기</div><div class="v num" id="hud-k">—</div></div>
+    <div><div class="l">머리–발 가속도 차</div><div class="v num" id="hud-g">—</div></div>
+  </div>
+  <div class="stretch-l">늘임</div>
+  <div class="stretch"><div class="f" id="hud-stretch" style="height:0%"></div></div>
+  <div class="timeline" id="hud-timeline"><div class="bar"></div><div class="fill" id="hud-fill" style="width:0%"></div></div>
+</div>
+
+<aside id="drawer"><button class="close" id="drawer-close">×</button><div id="drawer-body"></div></aside>
+
+<div id="loading"><div class="ring"></div><div class="msg" id="loading-msg">자료를 불러오는 중</div></div>
+<div id="error"><div class="box"><h2>실행할 수 없어요</h2><p class="note" id="error-msg"></p></div></div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

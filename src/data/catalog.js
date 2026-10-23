@@ -21,6 +21,14 @@ export const RENDER = {
   'gw190521':    { group: 'gw', order: 2, renderInc: 45, incNote: '병합 잔해: 원반 없음', disk: 'none' },
   'gw231123':    { group: 'gw', order: 3, renderInc: 45, incNote: '병합 잔해: 원반 없음', disk: 'none' },
   'gw250114':    { group: 'gw', order: 4, renderInc: 45, incNote: '병합 잔해: 원반 없음', disk: 'none' },
+  'gw241011':    { group: 'gw', order: 5, renderInc: 45, incNote: '병합 전 주성: 원반 없음', disk: 'none', infoOnly: true },
+  'gw241110':    { group: 'gw', order: 6, renderInc: 45, incNote: '병합 전 주성: 원반 없음', disk: 'none', infoOnly: true },
+  'phoenix-a':   { group: 'smbh', order: 7, renderSpin: 0.5, spinAssumed: true, renderInc: 60, incNote: '측정 없음 (가정 60°)', disk: 'bright', eddington: 0.01, estimateOnly: true },
+  'gx-339-4':    { group: 'stellar', order: 10, renderInc: 50, incNote: '37–78° (가정 50°)', disk: 'faint', infoOnly: true },
+  'capers-lrd-z9': { group: 'early', order: 1, renderSpin: 0.5, spinAssumed: true, renderInc: 45, incNote: '측정 없음 (가정 45°)', disk: 'bright', eddington: 0.5 },
+  'a2744-qso1':  { group: 'early', order: 2, renderSpin: 0.5, spinAssumed: true, renderInc: 45, incNote: '측정 없음 (가정 45°)', disk: 'bright', eddington: 0.3 },
+  'mom-bh-1':    { group: 'early', order: 3, renderInc: 45, incNote: '측정 없음', disk: 'bright', infoOnly: true },
+  'uhz1':        { group: 'early', order: 4, renderInc: 45, incNote: '측정 없음', disk: 'bright', infoOnly: true },
 };
 
 // 별명·짧은 이름
@@ -29,9 +37,12 @@ export const SHORT = {
   'cosmic-horseshoe': '코즈믹 호스슈', 'cyg-x-1': '백조자리 X-1', 'v404-cyg': 'V404 Cyg', 'a0620-00': 'A0620-00',
   'grs-1915': 'GRS 1915+105', 'maxi-j1820': 'MAXI J1820+070', 'gaia-bh1': '가이아 BH1', 'gaia-bh2': '가이아 BH2', 'gaia-bh3': '가이아 BH3',
   'omega-cen-imbh': 'ω Cen 중간질량', 'gw150914': 'GW150914 잔해', 'gw190521': 'GW190521 잔해', 'gw231123': 'GW231123 잔해', 'gw250114': 'GW250114 잔해',
+  'gw241011': 'GW241011', 'gw241110': 'GW241110', 'phoenix-a': '피닉스 A', 'gx-339-4': 'GX 339-4',
+  'capers-lrd-z9': 'CAPERS-LRD-z9', 'a2744-qso1': 'Abell 2744 QSO1', 'mom-bh-1': 'MoM-BH*-1', 'uhz1': 'UHZ1',
 };
 
-export const GROUP_LABEL = { smbh: '초대질량', stellar: '항성질량 · 중간질량', gw: '중력파 병합 잔해' };
+export const GROUP_LABEL = { smbh: '초대질량', stellar: '항성질량 · 중간질량', gw: '중력파로 본 블랙홀', early: '초기 우주 (JWST 시대)' };
+export const GROUP_ORDER = ['smbh', 'stellar', 'gw', 'early'];
 
 export async function loadCatalog(url = 'data/blackholes.json') {
   const raw = await (await fetch(url)).json();
@@ -39,8 +50,7 @@ export async function loadCatalog(url = 'data/blackholes.json') {
   for (const e of raw) {
     const r = RENDER[e.id];
     if (!r) continue;
-    const mass = e.mass ?? r.massForRender;
-    if (!mass) continue;
+    const mass = e.mass ?? r.massForRender ?? null;
     const spinMeasured = e.spin != null;
     const spin = spinMeasured ? e.spin : (r.renderSpin ?? 0);
     const distPc = e.distance_kpc != null ? e.distance_kpc * 1e3 : (e.distance_mpc ?? e.luminosity_distance_mpc) != null ? (e.distance_mpc ?? e.luminosity_distance_mpc) * 1e6 : null;
@@ -54,8 +64,11 @@ export async function loadCatalog(url = 'data/blackholes.json') {
       state: e.accretion_state, eddington: e.eddington_ratio ?? r.eddington ?? null, lumNote: e.luminosity_note,
       companion: e.companion, discovery: e.discovery_year, fact: e.fact_ko || e.fact, refs: e.refs,
       disk: r.disk, jet: !!r.jet, renderNote: r.massNote,
+      infoOnly: !!r.infoOnly || !mass, estimateOnly: !!r.estimateOnly,
+      luminosity: e.luminosity_erg_s, massMin: e.mass_min, massMax: e.mass_max, massCI: e.mass_ci,
+      distErr: e.distance_err_kpc ?? e.distance_err_mpc, snr: e.snr, areaTheorem: e.area_theorem,
     });
   }
-  list.sort((a, b) => (a.group === b.group ? a.order - b.order : ['smbh', 'stellar', 'gw'].indexOf(a.group) - ['smbh', 'stellar', 'gw'].indexOf(b.group)));
+  list.sort((a, b) => (a.group === b.group ? a.order - b.order : GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group)));
   return list;
 }

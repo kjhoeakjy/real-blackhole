@@ -162,9 +162,10 @@ const PLANETS = [
 ];
 
 export class UniverseMap {
-  constructor(canvas, catalog) {
+  constructor(canvas, catalog, opts = {}) {
     this.canvas = canvas;
     this.catalog = catalog;
+    this.opts = opts;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -178,6 +179,7 @@ export class UniverseMap {
     this.logDist = 12.2;            // log10(카메라 거리 / m) ; 12.2 ≈ 10.6 AU
     this.targetLogDist = this.logDist;
     this.minLog = 10.6; this.maxLog = 27.2;
+    this.camera.up.set(0, 0, 1);
     this.camera.position.set(0.6, -1.4, 0.9).normalize();
     this.layers = {};
     this.labels = [];
@@ -198,6 +200,25 @@ export class UniverseMap {
   _build() {
     const glow = glowTexture(), ring = ringTexture();
     this.tex = { glow, ring };
+    // ===== 별하늘 배경 (히파르코스 별 + 은하수 윤곽; 적도좌표 텍스처를 은하좌표 방향으로 샘플링) =====
+    if (this.opts.skyCanvas) {
+      const tex = new THREE.CanvasTexture(this.opts.skyCanvas);
+      tex.colorSpace = THREE.SRGBColorSpace; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+      const inv = A.InverseRotation(ROT_EQJ_GAL).rot; // 은하 → 적도
+      const m = new THREE.Matrix3().set(inv[0][0], inv[1][0], inv[2][0], inv[0][1], inv[1][1], inv[2][1], inv[0][2], inv[1][2], inv[2][2]);
+      this.skyMat = new THREE.ShaderMaterial({
+        uniforms: { uTex: { value: tex }, uRot: { value: m }, uGain: { value: 0.75 } },
+        vertexShader: `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+        fragmentShader: `uniform sampler2D uTex; uniform mat3 uRot; uniform float uGain; varying vec3 vDir;
+          void main(){ vec3 d = normalize(uRot*normalize(vDir)); float ra = atan(d.y, d.x); float dec = asin(clamp(d.z,-1.0,1.0));
+            vec2 uv = vec2(ra/6.28318530718+0.5, 0.5 - dec/3.14159265359); vec3 c = texture2D(uTex, uv).rgb; gl_FragColor = vec4(c*uGain, 1.0); }`,
+        side: THREE.BackSide, depthWrite: false, depthTest: false,
+      });
+      const sky = new THREE.Scene();
+      sky.add(new THREE.Mesh(new THREE.SphereGeometry(10, 48, 32), this.skyMat));
+      this.skyScene = sky;
+      this.skyCam = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    }
     // ===== 태양계 층 (단위 AU) =====
     const solar = new THREE.Scene();
     const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xfff1c8, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -313,15 +334,35 @@ export class UniverseMap {
   }
 
   zoomTo(logDist) { this.targetLogDist = THREE.MathUtils.clamp(logDist, this.minLog, this.maxLog); }
+  // 카메라 방향(단위 벡터)과 로그 거리로 이동. OrbitControls 는 카메라 위치의 방향만 쓰므로 위치를 직접 바꾼다.
+  flyTo(dir, logDist, instant = false) {
+    this.zoomTo(logDist);
+    this._flyDir = new THREE.Vector3(dir[0], dir[1], dir[2]).normalize();
+    if (instant) { this.camera.position.copy(this._flyDir); this.logDist = this.targetLogDist; this._flyDir = null; }
+  }
   get distanceMeters() { return Math.pow(10, this.logDist); }
 
   render(dt) {
     this.logDist += (this.targetLogDist - this.logDist) * Math.min(1, dt * 6);
-    this.controls.update();
+    if (this._flyDir) {
+      const cur = this.camera.position.clone().normalize();
+      const nd = cur.lerp(this._flyDir, Math.min(1, dt * 5)).normalize();
+      this.camera.position.copy(nd);
+      if (nd.distanceTo(this._flyDir) < 0.002) this._flyDir = null;
+    } else this.controls.update();
     const dir = this.camera.position.clone().normalize();
     const D = Math.pow(10, this.logDist);
     const r = this.renderer;
     r.clear(true, true, true);
+    if (this.skyScene) {
+      const skyAlpha = 1 - THREE.MathUtils.smoothstep(this.logDist, 17.6, 19.6);
+      if (skyAlpha > 0.003) {
+        this.skyMat.uniforms.uGain.value = 0.75 * skyAlpha;
+        this.skyCam.aspect = this.camera.aspect; this.skyCam.fov = this.camera.fov; this.skyCam.updateProjectionMatrix();
+        this.skyCam.position.set(0, 0, 0); this.skyCam.lookAt(-dir.x, -dir.y, -dir.z); this.skyCam.up.copy(this.camera.up);
+        r.render(this.skyScene, this.skyCam);
+      }
+    }
     const order = ['cosmic', 'gal', 'solar'];
     for (const key of order) {
       const L = this.layers[key];

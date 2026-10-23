@@ -178,7 +178,8 @@ vec3 diskEmission(vec3 x, vec4 p, float r, float f, vec3 l, out float alpha){
   float t2 = fbm(vec2(r*6.0 + 3.1, phase*12.0));
   float m = mix(1.0, 0.45 + 1.1*turb + 0.5*t2*t2, uDiskTurb);
   float Tobs = g*T;
-  float lum = pow(max(Tobs,1.0)/max(uDiskTstar,1.0), 4.0)*m*uDiskGain;
+  // 노비코프–손 온도의 최댓값은 r ≈ 1.36 r_in 에서 0.488 T* 이므로 그 값으로 정규화 (gain = 1 이면 정지 원반의 최고 밝기 ≈ 1)
+  float lum = pow(max(Tobs,1.0)/(0.488*max(uDiskTstar,1.0)), 4.0)*m*uDiskGain;
   // 가장자리 부드럽게
   float edge = smoothstep(0.0, 0.08, (uDiskOut - r)/uDiskOut) * smoothstep(0.0, 0.03, (r - uDiskIn)/uDiskIn);
   alpha = clamp(edge*min(1.0, 0.25 + lum*4.0), 0.0, 1.0);
