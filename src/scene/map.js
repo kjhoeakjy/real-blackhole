@@ -161,6 +161,15 @@ const PLANETS = [
   { body: 'Pluto', name: '명왕성', color: 0xc8b8a8, period: 90560, radiusKm: 1188 },
 ];
 
+// 방향 d(단위 벡터)를 북은하극(+Z) 쪽으로 tilt 라디안만큼 기울인 단위 벡터
+export function tiltDir(d, tilt) {
+  const z = new THREE.Vector3(0, 0, 1);
+  let u = z.clone().sub(d.clone().multiplyScalar(z.dot(d)));
+  if (u.lengthSq() < 1e-6) u = new THREE.Vector3(1, 0, 0).sub(d.clone().multiplyScalar(d.x));
+  u.normalize();
+  return d.clone().multiplyScalar(Math.cos(tilt)).add(u.multiplyScalar(Math.sin(tilt))).toArray();
+}
+
 export class UniverseMap {
   constructor(canvas, catalog, opts = {}) {
     this.canvas = canvas;
@@ -178,7 +187,9 @@ export class UniverseMap {
     this.controls.rotateSpeed = 0.5;
     this.logDist = 12.2;            // log10(카메라 거리 / m) ; 12.2 ≈ 10.6 AU
     this.targetLogDist = this.logDist;
-    this.minLog = 10.6; this.maxLog = 27.2;
+    this.minLog = 7.0; this.maxLog = 27.2;
+    this.focus = new THREE.Vector3(0, 0, 0);   // 카메라가 보는 점 (미터, 태양중심 은하좌표)
+    this.focusBody = null;                      // 행성을 따라갈 때 그 행성 이름
     this.camera.up.set(0, 0, 1);
     this.camera.position.set(0.6, -1.4, 0.9).normalize();
     this.layers = {};
@@ -225,9 +236,21 @@ export class UniverseMap {
     sun.scale.setScalar(0.25); solar.add(sun);
     this.sunSprite = sun;
     this.planetSprites = [];
+    this.planetMeshes = [];
+    // 햇빛: 태양 위치의 점광원. 감쇠 없음 — 해왕성도 알아볼 수 있게 (실제 밝기 비율이 아니라 보이기 위한 조명)
+    const sunLight = new THREE.PointLight(0xfff4e0, 2.8, 0, 0); solar.add(sunLight);
+    solar.add(new THREE.AmbientLight(0x404860, 0.35));
+    const sphereGeo = new THREE.SphereGeometry(1, 64, 32);
     for (const p of PLANETS) {
-      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: p.color, depthWrite: false }));
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: p.color, depthWrite: false, transparent: true }));
       s.scale.setScalar(0.08); s.userData = p; solar.add(s); this.planetSprites.push(s);
+      // 실제 반지름의 구 (가까이 가면 보인다)
+      const m = new THREE.Mesh(sphereGeo, new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.95, metalness: 0 }));
+      m.scale.setScalar(p.radiusKm * 1e3 / AU); m.userData = p; solar.add(m); this.planetMeshes.push(m);
+      if (p.body === 'Saturn') {
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.24, 2.27, 96), new THREE.MeshStandardMaterial({ color: 0xcdbb95, roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+        ring.rotation.x = 26.7 * DEG; m.add(ring);
+      }
       // 궤도: 한 공전주기를 256 점으로
       const pts = [];
       const T0 = this.now.getTime();
@@ -314,6 +337,8 @@ export class UniverseMap {
       else xyz = this._helioGal(p.body, date);
       s.position.set(xyz[0], xyz[1], xyz[2]);
       p.helio = xyz; p.distAU = Math.hypot(...xyz);
+      const m = this.planetMeshes.find((q) => q.userData === p); if (m) m.position.set(xyz[0], xyz[1], xyz[2]);
+      if (this.focusBody === p.body) this.focus.set(xyz[0] * AU, xyz[1] * AU, xyz[2] * AU);
     }
   }
 
@@ -334,24 +359,44 @@ export class UniverseMap {
   }
 
   zoomTo(logDist) { this.targetLogDist = THREE.MathUtils.clamp(logDist, this.minLog, this.maxLog); }
+  // 행성으로 이동: 그 행성을 따라가며, 햇빛 받는 쪽이 보이도록 태양 쪽에서 바라본다
+  flyToPlanet(body) {
+    const sp = this.planetSprites.find((s) => s.userData.body === body);
+    if (!sp) return;
+    const p = sp.userData;
+    this.focusBody = body;
+    this.focus.set(sp.position.x * AU, sp.position.y * AU, sp.position.z * AU);
+    const d = sp.position.clone().negate().normalize();
+    this.flyTo(tiltDir(d, 0.95), Math.log10(p.radiusKm * 1e3 * 7), false); // 낮과 밤의 경계가 보이도록 55° 비스듬히
+  }
+  // 태양으로 복귀
+  focusSun() { this.focusBody = null; this._focusHome = true; }
   // 카메라 방향(단위 벡터)과 로그 거리로 이동. OrbitControls 는 카메라 위치의 방향만 쓰므로 위치를 직접 바꾼다.
   flyTo(dir, logDist, instant = false) {
     this.zoomTo(logDist);
     this._flyDir = new THREE.Vector3(dir[0], dir[1], dir[2]).normalize();
-    if (instant) { this.camera.position.copy(this._flyDir); this.logDist = this.targetLogDist; this._flyDir = null; }
+    if (instant) { this.camera.position.copy(this._flyDir); this._dirV = this._flyDir.clone(); this.logDist = this.targetLogDist; this._flyDir = null; }
   }
   get distanceMeters() { return Math.pow(10, this.logDist); }
 
   render(dt) {
     this.logDist += (this.targetLogDist - this.logDist) * Math.min(1, dt * 6);
+    // 보는 방향은 원점 기준 단위 벡터로 따로 들고 있다. OrbitControls 는 이 단위 벡터 위에서만 동작하고,
+    // 실제 카메라 위치(초점 + 방향·거리)는 아래서 층마다 다시 계산한다 (초점이 행성일 때 방향이 오염되지 않도록).
+    if (!this._dirV) this._dirV = this.camera.position.clone().normalize();
+    this.camera.position.copy(this._dirV);
     if (this._flyDir) {
-      const cur = this.camera.position.clone().normalize();
-      const nd = cur.lerp(this._flyDir, Math.min(1, dt * 5)).normalize();
+      const nd = this._dirV.clone().lerp(this._flyDir, Math.min(1, dt * 5)).normalize();
       this.camera.position.copy(nd);
       if (nd.distanceTo(this._flyDir) < 0.002) this._flyDir = null;
     } else this.controls.update();
     const dir = this.camera.position.clone().normalize();
+    this._dirV = dir;
     const D = Math.pow(10, this.logDist);
+    // 행성에 붙어 있을 때는 궤도선을 감춘다 (화면을 가로지르는 줄이 되므로)
+    this._orbitFade = THREE.MathUtils.lerp(this._orbitFade ?? 1, this.focusBody ? 0 : 1, Math.min(1, dt * 4));
+    // 행성을 따라가다 멀리 나가면 태양으로 돌아온다
+    if ((this.focusBody && this.logDist > 12.6) || this._focusHome) { this.focusBody = null; this.focus.multiplyScalar(Math.max(0, 1 - dt * 5)); if (this.focus.length() < 1e3) { this.focus.set(0, 0, 0); this._focusHome = false; } }
     const r = this.renderer;
     r.clear(true, true, true);
     if (this.skyScene) {
@@ -370,21 +415,29 @@ export class UniverseMap {
       L.alpha = alpha;
       if (alpha <= 0.002) continue;
       const dUnits = D / L.unit;
-      this.camera.position.copy(dir).multiplyScalar(dUnits);
+      const f = this.focus.clone().divideScalar(L.unit);
+      this.camera.position.copy(dir).multiplyScalar(dUnits).add(f);
       this.camera.near = dUnits * 1e-4; this.camera.far = dUnits * 1e5;
       this.camera.updateProjectionMatrix();
-      this.camera.lookAt(0, 0, 0);
+      this.camera.lookAt(f);
       // 스프라이트 크기: 화면에서 일정한 픽셀 크기가 되도록 거리 비례
       const px = dUnits * 0.018;
       L.scene.traverse((o) => {
         if (o.isSprite) {
           const ud = o.userData || {};
-          if (ud.body) o.scale.setScalar(Math.max(px * 0.55, 0.00001));
+          if (ud.body) {
+            // 구가 화면에서 충분히 크면 빛무리 스프라이트는 감춘다
+            const dist = o.position.distanceTo(this.camera.position);
+            const pxR = (ud.radiusKm * 1e3 / AU) / dist / Math.tan(this.camera.fov * DEG / 2) * (this.h || 1000) / 2;
+            const vis = 1 - THREE.MathUtils.smoothstep(pxR, 1.5, 6);
+            o.scale.setScalar(Math.max(px * 0.55 * vis, 0.00001));
+            o.material.userData.baseOpacity = vis;
+          }
           else if (ud.id) o.scale.setScalar(px * 1.1);
           else if (o === this.sunSprite) o.scale.setScalar(Math.max(px * 1.4, 0.0093 * 2));
           if (o.material) o.material.opacity = (o.material.userData?.baseOpacity ?? 1) * alpha;
         }
-        if (o.isLine && o.material) o.material.opacity = 0.35 * alpha;
+        if (o.isLine && o.material) o.material.opacity = 0.35 * alpha * (key === 'solar' ? this._orbitFade : 1);
       });
       if (key === 'gal') this.galMat.uniforms.uOpacity.value = 0.9 * alpha * (this.logDist < 19 ? THREE.MathUtils.smoothstep(this.logDist, 15, 19) : 1);
       r.clearDepth();
@@ -404,17 +457,21 @@ export class UniverseMap {
       const alpha = this._layerAlpha(lb.layer);
       if (alpha < 0.05) continue;
       const dUnits = this._D / L.unit;
-      this.camera.position.copy(dir).multiplyScalar(dUnits);
+      const f = this.focus.clone().divideScalar(L.unit);
+      this.camera.position.copy(dir).multiplyScalar(dUnits).add(f);
       this.camera.near = dUnits * 1e-4; this.camera.far = dUnits * 1e5;
-      this.camera.updateProjectionMatrix(); this.camera.lookAt(0, 0, 0);
+      this.camera.updateProjectionMatrix(); this.camera.lookAt(f);
       this.camera.updateMatrixWorld();
+      // 카메라 뒤쪽은 건너뛴다 (투영하면 화면 안쪽에 거꾸로 찍힌다)
+      if (v.copy(lb.obj.position).sub(this.camera.position).dot(dir) > 0) continue;
       v.copy(lb.obj.position).project(this.camera);
       if (v.z > 1 || v.z < -1) continue;
       const x = (v.x * 0.5 + 0.5) * this.w, y = (-v.y * 0.5 + 0.5) * this.h;
       // 너무 멀어서 화면 중앙 한 점에 뭉치는 라벨은 숨김 (태양계 행성은 궤도가 안 보이면 숨김)
-      const distUnits = lb.obj.position.length();
+      const distUnits = lb.obj.position.distanceTo(f);
       const angular = distUnits / dUnits;
-      if (lb.kind === 'planet' && angular < 0.004) continue;
+      if (lb.kind === 'planet' && angular < 0.004 && this.focusBody !== lb.obj.userData?.body) continue;
+      if (lb.kind === 'sun' && lb.layer === 'solar' && this.focusBody) continue;
       if (lb.kind === 'bh' && lb.layer === 'gal' && angular < 0.003 && lb.bh.id !== 'sgr-a-star') continue;
       out.push({ x, y, text: lb.text, kind: lb.kind, alpha, data: lb.bh || lb.obj.userData, angular });
     }

@@ -1,4 +1,4 @@
-// 앱 진입점: 자료 로드, 화면 모드(지도/보기/떨어뜨리기/만들기) 전환, 렌더 루프, 시계, 실시간 서랍.
+// 앱 진입점: 자료 로드, 화면 모드(지도/보기/집어넣기/만들기) 전환, 렌더 루프, 시계, 실시간 서랍.
 import { loadCatalog } from './data/catalog.js';
 import { buildSkyCanvas } from './scene/bh-renderer.js';
 import { UniverseMap } from './scene/map.js';
@@ -62,6 +62,10 @@ function wireChrome() {
   // 모바일: 패널 손잡이 탭으로 접기/펴기
   ctx.els.panel.addEventListener('click', (e) => { if (e.target === ctx.els.panel) ctx.els.panel.classList.toggle('collapsed'); });
   window.addEventListener('resize', resize);
+  // 사파리 두 손가락 확대(페이지 줌) 막기: 지도·블랙홀 화면의 핀치는 각 캔버스가 직접 받는다
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 && !e.target.closest('#stage')) e.preventDefault(); }, { passive: false });
+  document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
   window.addEventListener('hashchange', () => { const [m, a] = location.hash.replace('#', '').split('/'); if (ctx.modes[m] && m !== ctx.mode) setMode(m, a); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ctx.live.toggle(false); ctx.modes[ctx.mode]?.onEscape?.(); } });
 }

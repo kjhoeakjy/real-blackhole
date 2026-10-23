@@ -64,14 +64,14 @@ export class BHView {
     s.disk.rout = Math.max(14, rIsco * 4.5);
     s.disk.Tstar = dt ? clamp(dt.Tstar, 1200, 40000) : 6500;
     // 노비코프–손 원반은 T ∝ r^-3/4 라 ISCO 근처 고리만 밝다. 정면에서도 바깥 원반이 보이도록 노출을 올린다 (안쪽은 ACES 로 부드럽게 포화)
-    s.disk.gain = desc.disk === 'faint' ? 1.0 : desc.disk === 'riaf' ? 1.6 : 2.2;
+    s.disk.gain = desc.disk === 'faint' ? 0.7 : desc.disk === 'riaf' ? 1.1 : 1.3;
     s.disk.turb = 0.75;
     s.skyGain = 1;
     s.obj.on = false;
     this.tg = tg(Mkg);
     this.rPlus = horizons(chi).rPlus;
     if (opts.inc != null) this.target.inc = this.cam.inc = clamp(opts.inc, 1, 179);
-    if (opts.dist != null) this.target.dist = this.cam.dist = opts.dist;
+    if (opts.dist != null) this.target.dist = this.cam.dist = opts.dist === 'auto' ? clamp(2.3 * s.disk.rout, 26, 60) : opts.dist;
     this.touch();
   }
   setDisk(on) { this.R.state.disk.on = on && this.desc?.disk !== 'none'; this.touch(); }

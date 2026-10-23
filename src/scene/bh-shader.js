@@ -174,8 +174,9 @@ vec3 diskEmission(vec3 x, vec4 p, float r, float f, vec3 l, out float alpha){
   // 난류 무늬: 각속도 차이에 따라 감기는 패턴
   float phi = atan(x.y, x.x);
   float phase = phi - Om*uTime;
-  float turb = fbm(vec2(r*1.2, phase*3.0)) ;
-  float t2 = fbm(vec2(r*6.0 + 3.1, phase*12.0));
+  // 방위각은 원 위에 올려 이음새 없이 주기적으로
+  float turb = fbm(vec2(r*1.2 + 6.0*cos(phase), 6.0*sin(phase)));
+  float t2 = fbm(vec2(r*6.0 + 3.1 + 16.0*cos(phase), 16.0*sin(phase)));
   float m = mix(1.0, 0.45 + 1.1*turb + 0.5*t2*t2, uDiskTurb);
   float Tobs = g*T;
   // 노비코프–손 온도의 최댓값은 r ≈ 1.36 r_in 에서 0.488 T* 이므로 그 값으로 정규화 (gain = 1 이면 정지 원반의 최고 밝기 ≈ 1)

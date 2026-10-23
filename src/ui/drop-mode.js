@@ -1,9 +1,9 @@
-// 떨어뜨리기 모드: 실제 물체를 실제 블랙홀에 놓고, 완전히 분해되기까지의 고유시간을 맞힌 뒤 1인칭 낙하를 본다.
+// 집어넣기 모드: 실제 물체를 실제 블랙홀에 집어넣고, 완전히 분해되기까지의 고유시간을 맞힌 뒤 1인칭 낙하를 본다.
 import { OBJECTS } from '../data/objects.js';
-import { GROUP_LABEL } from '../data/catalog.js';
 import { buildScenario, kRadial } from '../physics/fall.js';
-import { M_SUN, AU, rg } from '../physics/constants.js';
+import { M_SUN, rg } from '../physics/constants.js';
 import { fmtSci, fmtSolar, fmtKm, fmtG, fmtTime, fmtLen, esc, el } from './format.js';
+import { bhSelect } from './common.js';
 
 const UNITS = [['ns', 1e-9], ['µs', 1e-6], ['ms', 1e-3], ['초', 1], ['분', 60], ['시간', 3600], ['일', 86400], ['년', 365.25 * 86400]];
 const DURATION = 24; // 낙하 애니메이션 길이 (초)
@@ -22,9 +22,7 @@ export class DropMode {
   }
   leave() { this._stopFall(); }
   onEscape() { if (this.state === 'falling') this._finish(true); }
-  _applyBH() {
-    this.ctx.bh.setBH(this.bh, { inc: 80, dist: 30 });
-  }
+  _applyBH() { this.ctx.bh.setBH(this.bh, { inc: 80, dist: 30 }); }
   _gameSpin() { return this.bh.custom ? Math.min(0.998, this.bh.spin ?? 0) : (this.bh.spinMeasured ? Math.min(0.998, this.bh.spin) : 0); }
   _r0() {
     const Mkg = this.bh.mass * M_SUN, rgm = rg(Mkg);
@@ -34,45 +32,36 @@ export class DropMode {
   }
   _setup() {
     const b = this.ctx.els.body, bh = this.bh;
-    const list = this.ctx.catalog.filter((x) => !x.infoOnly);
     const Mkg = bh.mass * M_SUN, rgm = rg(Mkg);
     const r0 = this._r0();
     const chi = this._gameSpin();
-    const chips = list.map((x) => `<button class="chip${x.id === bh.id && !bh.custom ? ' active' : ''}" data-id="${x.id}">${esc(x.short)}</button>`).join('') + (this.ctx.custom ? `<button class="chip${bh.custom ? ' active' : ''}" data-id="custom">직접 만든 블랙홀</button>` : '');
-    const objs = OBJECTS.map((o) => `<button class="item${o.id === this.obj.id ? ' active' : ''}" data-obj="${o.id}"><span class="swatch" style="color:rgb(${o.color.map((c) => Math.round(c * 255)).join(',')});background:currentColor"></span><div class="name"><b>${esc(o.name)}</b><span>${esc(o.mechanism)}</span></div><div class="meta num">${o.mass < 1e3 ? o.mass + ' kg' : fmtSci(o.mass, 2) + ' kg'}</div></button>`).join('');
+    const objs = OBJECTS.map((o) => `<button class="item${o.id === this.obj.id ? ' active' : ''}" data-obj="${o.id}"><span class="swatch" style="color:rgb(${o.color.map((c) => Math.round(c * 255)).join(',')});background:currentColor"></span><div class="name"><b>${esc(o.name)}</b></div><div class="meta num">${o.mass < 1e3 ? o.mass + ' kg' : fmtSci(o.mass, 2) + ' kg'}</div></button>`).join('');
     b.innerHTML = '';
     this.root = el(`<div>
-      <div class="section">
-        <div class="eyebrow">떨어뜨리기</div>
-        <div class="title-lg">분해까지 얼마나 걸릴까요?</div>
-        <p class="note">물체를 블랙홀의 자전축 위, 정지 상태에서 놓아요. 물체가 찬 시계로 완전히 분해될 때까지의 시간을 맞혀 보세요. 그 뒤 물체의 눈으로 떨어지는 장면을 봐요.</p>
-      </div>
-      <div class="section"><div class="section-title">1 · 블랙홀</div><div class="chips">${chips}</div>
-        <div class="kv" style="margin-top:10px"><div class="k">질량</div><div class="v num">${fmtSolar(bh.mass)}</div><div class="k">게임에 쓰는 스핀</div><div class="v num">${chi.toFixed(3)} ${bh.spinMeasured || bh.custom ? '' : '<span class="tag assume">미측정 → 0</span>'}</div><div class="k">지평선 반지름</div><div class="v num">${fmtKm((1 + Math.sqrt(1 - chi * chi)) * rgm)}</div></div></div>
-      <div class="section"><div class="section-title">2 · 물체</div><div class="list">${objs}</div>
-        <p class="note tiny" id="d-objdesc">${esc(this.obj.desc)}</p></div>
-      <div class="section"><div class="section-title">3 · 출발</div>
-        <div class="kv"><div class="k">놓는 거리 (중심에서)</div><div class="v num">${fmtLen(r0 * rgm)}<small>${fmtSci(r0, 3)} r_g</small></div><div class="k">물체 크기</div><div class="v num">${fmtLen(2 * this.obj.radius)}</div></div></div>
-      <div class="section"><div class="section-title">4 · 추측</div>
-        <p class="small">물체의 시계로, 놓은 순간부터 <b>완전히 분해</b>될 때까지</p>
+      <div class="section"><div class="eyebrow">집어넣기</div><div class="title-lg">완전히 분해될 때까지</div></div>
+      <div class="section"><div class="section-title">블랙홀</div><div id="d-select"></div>
+        <div class="kv" style="margin-top:10px"><div class="k">질량</div><div class="v num">${fmtSolar(bh.mass)}</div><div class="k">스핀</div><div class="v num">${chi.toFixed(3)}${bh.spinMeasured || bh.custom ? '' : ' <span class="tag assume">미측정 → 0</span>'}</div><div class="k">지평선</div><div class="v num">${fmtKm((1 + Math.sqrt(1 - chi * chi)) * rgm)}</div></div></div>
+      <div class="section"><div class="section-title">물체</div><div class="list">${objs}</div></div>
+      <div class="section"><div class="kv"><div class="k">놓는 거리</div><div class="v num">${fmtLen(r0 * rgm)}<small>${fmtSci(r0, 3)} r_g · 자전축 위, 정지 상태</small></div></div></div>
+      <div class="section"><div class="section-title">물체의 시계로 얼마나 걸릴까요?</div>
         <div class="row"><input type="number" id="d-guess" min="0" step="any" placeholder="숫자" style="flex:1"><select id="d-unit" style="width:96px">${UNITS.map(([u]) => `<option value="${u}"${u === '초' ? ' selected' : ''}>${u}</option>`).join('')}</select></div>
-        <p class="small" style="margin-top:12px">사건의 지평선을 넘기 <b>전에</b> 찢어질까요?</p>
-        <div class="chips"><button class="chip" data-yn="1">네, 밖에서</button><button class="chip" data-yn="0">아니요, 안에서</button></div>
-        <div class="row" style="margin-top:14px"><button class="btn primary block" id="d-go">떨어뜨리기</button></div>
+        <p class="small" style="margin-top:12px">어디서 찢어질까요?</p>
+        <div class="chips"><button class="chip" data-yn="1">지평선 밖</button><button class="chip" data-yn="0">지평선 안</button></div>
+        <div class="row" style="margin-top:14px"><button class="btn primary block" id="d-go">집어넣기</button></div>
         <p class="note tiny" id="d-err"></p>
       </div>
-      ${this.best ? `<div class="section"><div class="section-title">최고 점수</div><div class="num">${this.best} / 100</div></div>` : ''}
+      ${this.best ? `<div class="section"><div class="kv"><div class="k">최고 점수</div><div class="v num">${this.best} / 100</div></div></div>` : ''}
     </div>`);
     b.appendChild(this.root);
     const q = (s) => this.root.querySelector(s);
-    this.root.querySelectorAll('.chip[data-id]').forEach((c) => c.addEventListener('click', () => { this.bh = c.dataset.id === 'custom' ? this.ctx.custom : list.find((x) => x.id === c.dataset.id); if (!this.bh.custom) this.ctx.selected = this.bh; this._applyBH(); this._setup(); }));
+    q('#d-select').appendChild(bhSelect(this.ctx, bh.custom ? 'custom' : bh.id, (x) => { this.bh = x; if (!x.custom) this.ctx.selected = x; this._applyBH(); this._setup(); history.replaceState(null, '', '#drop/' + (x.custom ? 'custom' : x.id)); }));
     this.root.querySelectorAll('.item[data-obj]').forEach((c) => c.addEventListener('click', () => { this.obj = OBJECTS.find((o) => o.id === c.dataset.obj); this._setup(); }));
     this.yn = null;
     this.root.querySelectorAll('.chip[data-yn]').forEach((c) => c.addEventListener('click', () => { this.yn = c.dataset.yn === '1'; this.root.querySelectorAll('.chip[data-yn]').forEach((x) => x.classList.toggle('active', x === c)); }));
     q('#d-go').addEventListener('click', () => {
       const v = parseFloat(q('#d-guess').value);
       if (!(v > 0)) { q('#d-err').textContent = '0보다 큰 숫자를 넣어 주세요.'; return; }
-      if (this.yn == null) { q('#d-err').textContent = '지평선 질문에도 답해 주세요.'; return; }
+      if (this.yn == null) { q('#d-err').textContent = '어디서 찢어질지도 골라 주세요.'; return; }
       const unit = UNITS.find(([u]) => u === q('#d-unit').value)[1];
       this.guess = { tau: v * unit, outside: this.yn, text: `${v} ${q('#d-unit').value}` };
       this._startFall();
@@ -84,13 +73,11 @@ export class DropMode {
     const chi = this._gameSpin();
     const r0 = this._r0();
     const sc = this.sc = buildScenario(bh, obj, r0, { spin: chi });
-    const rgm = sc.rg;
     this.rEndAnim = chi > 0 ? Math.max(sc.rMinus * 1.02, sc.rTurn * 1.05, 0.05) : 0.22;
-    // 이벤트 목록 (반지름 내림차순으로 지나감)
     const ev = [];
     for (const s of sc.stages) if (!s.unreachable && s.rM < r0 && s.rM > this.rEndAnim) ev.push({ r: s.rM, t: s.label, s: s.note, main: s.main, micro: s.micro });
-    ev.push({ r: sc.rPlus, t: '사건의 지평선', s: '여기서부터는 돌아갈 수 없어요. 바깥 우주는 등 뒤로 몰려 보여요.', horizon: true });
-    if (sc.inner) ev.push({ r: sc.rMinus, t: '내부 (코시) 지평선', s: '청색편이된 복사가 쌓이는 곳. 여기서부터는 물리가 불확실해요.', horizon: true });
+    ev.push({ r: sc.rPlus, t: '사건의 지평선', s: '돌아갈 수 없어요', horizon: true });
+    if (sc.inner) ev.push({ r: sc.rMinus, t: '내부 지평선', s: '여기서부터는 물리가 불확실해요', horizon: true });
     ev.sort((a, b) => b.r - a.r);
     this.events = ev; this.evIdx = 0;
     this.t = 0; this.state = 'falling';
@@ -105,7 +92,7 @@ export class DropMode {
     V.setFall(r0, sc.E, chi, this.look);
     this._timeline();
     this._hudLookChips();
-    this.ctx.setHint('Esc: 건너뛰기 · 1/2/3: 앞·옆·뒤 보기');
+    this.ctx.setHint('Esc 건너뛰기 · 1/2/3 앞·옆·뒤');
     this._key = (e) => { if (e.key === '1') this.look = 'down'; else if (e.key === '2') this.look = 'side'; else if (e.key === '3') this.look = 'up'; };
     document.addEventListener('keydown', this._key);
   }
@@ -118,12 +105,10 @@ export class DropMode {
   _timeline() {
     const tl = document.getElementById('hud-timeline');
     tl.querySelectorAll('.mark').forEach((m) => m.remove());
-    const sc = this.sc, r0 = sc.r0M;
     const pos = (r) => this._progress(r) * 100;
     for (const e of this.events) {
       if (e.micro) continue;
-      const m = el(`<div class="mark${e.main ? ' main' : ''}${e.horizon ? ' horizon' : ''}" style="left:${pos(e.r).toFixed(2)}%"><i>${esc(e.main ? '완전 분해' : e.horizon ? e.t.replace(' (코시)', '') : '')}</i></div>`);
-      tl.appendChild(m);
+      tl.appendChild(el(`<div class="mark${e.main ? ' main' : ''}${e.horizon ? ' horizon' : ''}" style="left:${pos(e.r).toFixed(2)}%"><i>${esc(e.main ? '분해' : e.horizon ? e.t : '')}</i></div>`));
     }
   }
   // 반지름 → 애니메이션 진행도 (0..1), 로그 간격
@@ -158,7 +143,6 @@ export class DropMode {
     const frac = Math.min(1, Math.max(0, (Math.log10(Math.abs(k) + 1e-300) - (Math.log10(kCrit) - 5)) / 5));
     document.getElementById('hud-stretch').style.height = (frac * 100).toFixed(1) + '%';
     document.getElementById('hud-fill').style.width = (this._progress(r) * 100).toFixed(2) + '%';
-    // 이벤트
     while (this.evIdx < this.events.length && r <= this.events[this.evIdx].r) {
       const e = this.events[this.evIdx++];
       if (!e.micro || e.main) this._event(e.t, e.s);
@@ -182,6 +166,7 @@ export class DropMode {
       this.ctx.bh.setBH(this.bh, { inc: 80, dist: 30 });
       document.getElementById('flash').style.opacity = 0;
       this.ctx.els.panel.classList.remove('collapsed');
+      this.ctx.setHint('');
       this._reveal();
     }, skipped ? 300 : 1400);
   }
@@ -190,7 +175,7 @@ export class DropMode {
     const main = sc.main;
     let answer, answerLabel, outsideTruth;
     if (main && !main.unreachable) { answer = main.tau; answerLabel = main.label; outsideTruth = !main.inside; }
-    else if (sc.inner) { answer = sc.inner.tau; answerLabel = '내부 지평선 도달 (조석으로는 끝까지 안 찢어짐)'; outsideTruth = false; }
+    else if (sc.inner) { answer = sc.inner.tau; answerLabel = '내부 지평선 도달'; outsideTruth = false; }
     else { answer = sc.end.tau; answerLabel = '특이점'; outsideTruth = false; }
     const err = Math.abs(Math.log10(g.tau / answer));
     const base = Math.max(0, 80 * (1 - err / 3));
@@ -199,39 +184,34 @@ export class DropMode {
     this.best = Math.max(this.best, score);
     const ratio = g.tau / answer;
     const verdict = err < 0.1 ? '거의 정확해요' : err < 0.5 ? '같은 자릿수예요' : err < 1 ? '10배 안쪽이에요' : ratio > 1 ? `${fmtSci(ratio, 2)}배 길게 봤어요` : `${fmtSci(1 / ratio, 2)}배 짧게 봤어요`;
-    const rows = sc.stages.filter((s) => !s.micro || s.k < 1e46).map((s) => {
-      const where = s.unreachable ? '<span class="tag">도달 못 함</span>' : s.atRelease ? '<span class="tag">놓는 순간</span>' : s.inside ? '<span class="tag assume">지평선 안</span>' : '<span class="tag warn">지평선 밖</span>';
+    const rows = sc.stages.filter((s) => !s.micro).map((s) => {
       const rel = s.unreachable || s.atRelease ? '' : s.inside ? `<br><span class="faint tiny">지평선 뒤 +${fmtTime(s.tau - sc.horizon.tau)}</span>` : `<br><span class="faint tiny">지평선 전 −${fmtTime(sc.horizon.tau - s.tau)}</span>`;
-      return `<tr><td>${esc(s.label)}${s.main ? ' <b>·</b>' : ''}</td><td class="r num">${s.unreachable ? '—' : fmtLen(s.rMeters)}</td><td class="r num">${s.unreachable ? '—' : fmtTime(s.tau) + rel}</td><td class="r">${where}</td></tr>`;
+      return `<tr${s.main ? ' class="active"' : ''}><td>${esc(s.label)}</td><td class="r num">${s.unreachable ? '도달 못 함' : fmtLen(s.rMeters)}</td><td class="r num">${s.unreachable ? '—' : fmtTime(s.tau) + rel}</td></tr>`;
     }).join('');
-    const afterHorizon = main && !main.unreachable && main.inside ? main.tau - sc.horizon.tau : null;
-    const eFold = 5.196 * sc.tg;
+    const when = main && !main.unreachable ? (main.inside ? `지평선을 넘고 ${fmtTime(main.tau - sc.horizon.tau)} 뒤` : `지평선 ${fmtTime(sc.horizon.tau - main.tau)} 전`) : '';
     const b = this.ctx.els.body;
     b.innerHTML = '';
     this.root = el(`<div>
       <div class="section">
-        <div class="eyebrow">결과 · ${esc(obj.name)} → ${esc(bh.short || bh.name)}</div>
+        <div class="eyebrow">${esc(obj.name)} → ${esc(bh.short || bh.name)}</div>
         <div class="title-lg num">${score} <span class="faint" style="font-size:14px;font-weight:400">/ 100</span></div>
-        <p class="note">${verdict}. 시간 ${Math.round(base)}점 + 지평선 ${bonus}점.</p>
+        <p class="note">${verdict}.</p>
       </div>
       <div class="section">
         <div class="stat-row">
           <div class="stat"><div class="l">정답</div><div class="v num">${fmtTime(answer)}</div></div>
           <div class="stat"><div class="l">내 추측</div><div class="v num">${esc(g.text)}</div></div>
-          <div class="stat"><div class="l">지평선</div><div class="v">${outsideTruth ? '밖에서 찢어짐' : '안에서'} ${g.outside === outsideTruth ? '<span class="tag">맞음</span>' : '<span class="tag warn">틀림</span>'}</div></div>
+          <div class="stat"><div class="l">${outsideTruth ? '지평선 밖' : '지평선 안'}</div><div class="v">${g.outside === outsideTruth ? '<span class="tag">맞음</span>' : '<span class="tag warn">틀림</span>'}</div></div>
         </div>
-        <p class="note" style="margin-top:10px">${esc(answerLabel)}${afterHorizon != null ? ` — 지평선을 넘고 ${fmtTime(afterHorizon)} 뒤.` : main && !main.unreachable ? ` — 지평선 ${fmtTime(sc.horizon.tau - main.tau)} 전.` : '.'} 놓은 뒤 지평선 통과까지 ${fmtTime(sc.horizon.tau)}, 그 뒤 ${sc.chi > 0 ? `${fmtTime(sc.inner.tau - sc.horizon.tau)} 만에 내부 지평선` : `${fmtTime(sc.end.tau - sc.horizon.tau)} 만에 특이점`}.</p>
-        ${sc.mergerRegime ? `<p class="note tiny"><span class="tag warn">주의</span> 질량비 ${fmtSci(sc.massRatio, 2)} 로 블랙홀이 물체보다 충분히 무겁지 않아요. 깨끗한 조석 파괴보다는 병합에 가까워요.</p>` : ''}
-        ${main?.unreachable ? `<p class="note tiny">자전축 위 커 블랙홀에서는 조석장이 유한해요 (최댓값은 r ≈ √3·a 근처). 이 물체는 내부 지평선까지 조석으로는 찢어지지 않고, 거기서 청색편이된 복사에 파괴될 것으로 봐요 (모형 의존).</p>` : ''}
+        <p class="note" style="margin-top:10px">${esc(answerLabel)}${when ? ` · ${when}` : ''}. 지평선까지 ${fmtTime(sc.horizon.tau)}.</p>
+        ${sc.mergerRegime ? `<p class="note tiny"><span class="tag warn">주의</span> 질량비 ${fmtSci(sc.massRatio, 2)}. 조석 파괴보다 병합에 가까워요.</p>` : ''}
+        ${main?.unreachable ? `<p class="note tiny">자전축 위에서는 조석장이 유한해 내부 지평선까지 찢어지지 않아요.</p>` : ''}
       </div>
-      <div class="section"><div class="section-title">단계 (물체 시계)</div>
-        <table class="tbl"><tr><th>무슨 일</th><th class="r">중심에서</th><th class="r">시간</th><th class="r"></th></tr>${rows}</table>
-        <p class="note tiny">분해 기준: ${esc(obj.mechanism)}. 조석 기울기 k = 2GM·r(r²−3a²)/(r²+a²)³ (축 위 정확식). ${obj.refs ? '출처: ' + esc(obj.refs.join('; ')) : ''}</p>
+      <div class="section"><div class="section-title">단계 · 물체 시계</div>
+        <table class="tbl"><tr><th></th><th class="r">중심에서</th><th class="r">시간</th></tr>${rows}</table>
       </div>
-      <div class="section"><div class="section-title">먼 곳에서 보면</div>
-        <p class="note">바깥 관측자에게 물체는 지평선 바로 앞에서 점점 붉어지고 어두워지며 멈춘 듯 보여요. 지평선 0.1 % 앞까지 가는 데 먼 시계로 ${fmtTime(sc.coordToNearHorizon)}, 그 뒤 밝기는 ${fmtTime(eFold)} 마다 e분의 1로 줄어요 (Podurets 1964; Ames & Thorne 1968).</p>
-      </div>
-      <div class="section"><div class="row"><button class="btn primary" id="d-again">다시</button><button class="btn" id="d-view">이 블랙홀 보기</button></div></div>
+      <div class="section"><p class="note tiny" style="margin:0">먼 곳에서는 지평선 앞에서 멈춘 듯 보이고, 밝기는 ${fmtTime(5.196 * sc.tg)} 마다 e분의 1로 줄어요.</p></div>
+      <div class="section"><div class="row"><button class="btn primary" id="d-again">다시</button><button class="btn" id="d-view">보기</button></div></div>
     </div>`);
     b.appendChild(this.root);
     this.root.querySelector('#d-again').addEventListener('click', () => { this.state = 'setup'; this._setup(); });

@@ -1,4 +1,4 @@
-// 블랙홀에 떨어뜨릴 물체. 수치와 파괴 기준은 research/disruption-physics.md 의 표를 따른다.
+// 블랙홀에 집어넣을 물체. 수치와 파괴 기준은 research/disruption-physics.md 의 표를 따른다.
 // kCrit: 물체가 '완전히 찢어지는' 조석 기울기 (s^-2, 반지름 방향 2GM/r^3 기준). 중력으로 묶인 천체는 η 로부터 계산.
 //   k_crit = 2 G m / (η^3 R^3)
 import { G, M_SUN, R_SUN, M_EARTH, R_EARTH, M_JUP, R_JUP, M_MOON, R_MOON } from '../physics/constants.js';

@@ -36,7 +36,7 @@ export function shadowAngularSizeMicroarcsec(Mkg, Dm) {
 // ---------- 자전축(θ=0) 방향의 자유낙하 ----------
 // 축 위에서 L = 0, Q = 0 인 측지선. 고유시간 미분:
 //   (dr/dτ)^2 = E^2 - 1 + 2r/(r^2 + a^2)         (a=0 이면 슈바르츠실트 E^2 - 1 + 2/r)
-// 정지 상태에서 r0 에서 떨어뜨리면 E^2 = 1 - 2 r0/(r0^2 + a^2).
+// 정지 상태에서 r0 에서 놓으면 E^2 = 1 - 2 r0/(r0^2 + a^2).
 export function energyFromRest(r0, chi) {
   return Math.sqrt(Math.max(0, 1 - 2 * r0 / (r0 * r0 + chi * chi)));
 }
