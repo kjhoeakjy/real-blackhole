@@ -1,22 +1,26 @@
-// 앱 진입점: 자료 로드, 화면 모드(지도/보기/집어넣기/만들기) 전환, 렌더 루프, 시계, 실시간 서랍.
+// 앱 진입점: 자료 로드, 지도·블랙홀 화면 전환, 렌더 루프, 시계.
 import { loadCatalog } from './data/catalog.js';
+import { STARS } from './data/destinations.js';
 import { buildSkyCanvas } from './scene/bh-renderer.js';
 import { UniverseMap } from './scene/map.js';
 import { BHView } from './scene/bh-view.js';
-import { MapMode } from './ui/map-mode.js';
-import { ViewMode } from './ui/view-mode.js';
-import { DropMode } from './ui/drop-mode.js';
-import { BuildMode } from './ui/build-mode.js';
-import { LivePanel } from './ui/live.js';
+import { TripMode } from './ui/trip-mode.js';
 import { fmtHMS, fmtDate } from './ui/format.js';
 
 const $ = (s) => document.querySelector(s);
 const ctx = {
-  catalog: null, stars: null, mw: null, skyCanvas: null, map: null, bh: null,
-  mode: null, modes: {}, selected: null, custom: null,
-  els: { panel: $('#panel'), body: $('#panel-body'), labels: $('#labels'), card: $('#card'), hint: $('#hint'), scale: $('#scale'), hud: $('#hud'), mapCanvas: $('#map-canvas'), bhCanvas: $('#bh-canvas') },
+  catalog: null, stars: null, mw: null, skyCanvas: null, map: null, bh: null, mode: null, bhOn: false,
+  els: { panel: $('#panel'), body: $('#panel-body'), labels: $('#labels'), hint: $('#hint'), scale: $('#scale'), mapCanvas: $('#map-canvas'), bhCanvas: $('#bh-canvas') },
   setHint(t) { this.els.hint.textContent = t || ''; },
-  setMode(name, arg) { setMode(name, arg); },
+  // 지도 ↔ 블랙홀 광선추적 화면
+  showBH(on) {
+    this.bhOn = on;
+    this.els.mapCanvas.classList.toggle('hidden', on);
+    this.els.bhCanvas.classList.toggle('hidden', !on);
+    this.els.labels.classList.toggle('hidden', on);
+    this.els.scale.classList.toggle('hidden', on);
+    if (on) { this.bh.resize(); this.bh.touch(); } else this.map._needsRender = true;
+  },
 };
 window.__bh = ctx;
 
@@ -33,19 +37,17 @@ async function boot() {
       fetch('data/mw.json').then((r) => r.json()),
     ]);
     ctx.catalog = catalog; ctx.stars = new Float32Array(starsBuf); ctx.mw = mw;
-    msg('별하늘 41,411 개');
+    msg('별하늘');
     await new Promise((r) => setTimeout(r, 10));
-    ctx.skyCanvas = buildSkyCanvas(ctx.stars, ctx.mw, 4096, 2048);
+    ctx.skyCanvas = buildSkyCanvas(ctx.stars, ctx.mw, 2048, 1024);
     msg('은하 모형');
     await new Promise((r) => setTimeout(r, 10));
-    ctx.map = new UniverseMap(ctx.els.mapCanvas, catalog, { skyCanvas: ctx.skyCanvas });
+    ctx.map = new UniverseMap(ctx.els.mapCanvas, catalog, { skyCanvas: ctx.skyCanvas, stars: STARS });
     ctx.bh = new BHView(ctx.els.bhCanvas, ctx.skyCanvas);
-    ctx.modes = { map: new MapMode(ctx), view: new ViewMode(ctx), drop: new DropMode(ctx), build: new BuildMode(ctx) };
-    ctx.live = new LivePanel(ctx);
+    ctx.mode = new TripMode(ctx);
     wireChrome();
     resize();
-    const initial = (location.hash.replace('#', '') || 'map').split('/');
-    setMode(ctx.modes[initial[0]] ? initial[0] : 'map', initial[1]);
+    ctx.mode.enter();
     $('#loading').classList.add('done');
     requestAnimationFrame(loop);
   } catch (e) {
@@ -55,24 +57,19 @@ async function boot() {
 }
 
 function wireChrome() {
-  document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
-  $('#live-btn').addEventListener('click', () => ctx.live.toggle());
-  $('#drawer-close').addEventListener('click', () => ctx.live.toggle(false));
   $('#panel-toggle').addEventListener('click', () => ctx.els.panel.classList.remove('collapsed'));
   // 모바일: 패널 손잡이 탭으로 접기/펴기
   ctx.els.panel.addEventListener('click', (e) => { if (e.target === ctx.els.panel) ctx.els.panel.classList.toggle('collapsed'); });
   window.addEventListener('resize', resize);
-  // 사파리 두 손가락 확대(페이지 줌) 막기: 지도·블랙홀 화면의 핀치는 각 캔버스가 직접 받는다
+  // 페이지 줌 막기: 지도·블랙홀 화면의 핀치는 각 캔버스가 직접 받는다
   for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 && !e.target.closest('#stage')) e.preventDefault(); }, { passive: false });
   document.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
-  window.addEventListener('hashchange', () => { const [m, a] = location.hash.replace('#', '').split('/'); if (ctx.modes[m] && m !== ctx.mode) setMode(m, a); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ctx.live.toggle(false); ctx.modes[ctx.mode]?.onEscape?.(); } });
 }
 
 function resize() {
   const w = innerWidth, h = innerHeight;
-  // 지도는 점 16만 개를 가산 합성으로 그리므로 픽셀 비율을 1.5 까지만 쓴다
+  // 지도는 점 수만 개를 가산 합성으로 그리므로 픽셀 비율을 1.5 까지만 쓴다
   const dpr = Math.min(devicePixelRatio || 1, 1.5);
   ctx.map.resize(Math.round(w * dpr), Math.round(h * dpr));
   ctx.els.mapCanvas.style.width = w + 'px'; ctx.els.mapCanvas.style.height = h + 'px';
@@ -80,42 +77,16 @@ function resize() {
   ctx.bh.touch();
 }
 
-function setMode(name, arg) {
-  if (!ctx.modes[name]) return;
-  if (ctx.mode === name && arg == null) return;
-  ctx.modes[ctx.mode]?.leave?.();
-  ctx.mode = name;
-  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.mode === name));
-  const usesMap = name === 'map';
-  ctx.els.mapCanvas.classList.toggle('hidden', !usesMap);
-  ctx.els.bhCanvas.classList.toggle('hidden', usesMap);
-  ctx.els.labels.classList.toggle('hidden', !usesMap);
-  ctx.els.scale.classList.toggle('hidden', !usesMap);
-  ctx.els.card.classList.add('hidden');
-  ctx.els.hud.classList.remove('on');
-  ctx.els.panel.classList.remove('collapsed');
-  ctx.bh.clearFall();
-  ctx.els.body.innerHTML = '';
-  ctx.els.body.scrollTop = 0;
-  ctx.modes[name].enter(arg);
-  if (!usesMap) { ctx.bh.resize(); ctx.bh.touch(); }
-  const hash = '#' + name + (arg ? '/' + arg : '');
-  if (location.hash !== hash) history.replaceState(null, '', hash);
-}
-
 let last = performance.now(), clockAt = 0;
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
-  const m = ctx.modes[ctx.mode];
-  if (ctx.mode === 'map') { ctx.map.render(dt); }
-  else { ctx.bh.render(dt, now); }
-  m?.tick?.(dt, now);
+  if (ctx.bhOn) ctx.bh.render(dt, now); else ctx.map.render(dt);
+  ctx.mode.tick(dt, now);
   if (now - clockAt > 250) {
     clockAt = now;
     const d = new Date();
     const kst = new Date(d.getTime() + 9 * 3600e3);
     $('#clock-text').textContent = `${fmtDate(d)} ${fmtHMS(d)} UTC · ${fmtHMS(kst)} KST`;
-    ctx.live.tick?.(d);
   }
   requestAnimationFrame(loop);
 }

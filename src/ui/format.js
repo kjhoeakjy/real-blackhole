@@ -1,7 +1,31 @@
 // 표시용 숫자 포맷. 지수 표기는 ×10ⁿ 형태로.
-import { fmtTime as _fmtTime, fmtLen as _fmtLen } from '../physics/fall.js';
-export { fmtMass } from '../physics/fall.js';
-// fall.js 의 포맷은 e+n 지수 표기를 쓰므로 화면에서는 ×10ⁿ 으로 바꾼다
+function _fmtTime(s) {
+  if (!isFinite(s)) return '∞';
+  if (s === 0) return '0';
+  const abs = Math.abs(s);
+  if (abs < 1e-9) return `${(s * 1e12).toPrecision(3)} ps`;
+  if (abs < 1e-6) return `${(s * 1e9).toPrecision(3)} ns`;
+  if (abs < 1e-3) return `${(s * 1e6).toPrecision(3)} µs`;
+  if (abs < 1) return `${(s * 1e3).toPrecision(3)} ms`;
+  if (abs < 60) return `${s.toPrecision(3)} 초`;
+  if (abs < 3600) return `${(s / 60).toPrecision(3)} 분`;
+  if (abs < 86400) return `${(s / 3600).toPrecision(3)} 시간`;
+  if (abs < 86400 * 365.25) return `${(s / 86400).toPrecision(3)} 일`;
+  if (abs < 86400 * 365.25 * 1e4) return `${(s / (86400 * 365.25)).toPrecision(3)} 년`;
+  return `${(s / (86400 * 365.25)).toExponential(2)} 년`;
+}
+function _fmtLen(m) {
+  const a = Math.abs(m);
+  if (a < 1e-3) return `${(m * 1e6).toPrecision(3)} µm`;
+  if (a < 1) return `${(m * 1e3).toPrecision(3)} mm`;
+  if (a < 1e3) return `${m.toPrecision(3)} m`;
+  if (a < 1.495978707e11 * 0.1) return `${(m / 1e3).toPrecision(4)} km`;
+  if (a < 3.0857e16 * 0.1) return `${(m / 1.495978707e11).toPrecision(3)} AU`;
+  if (a < 3.0857e19) return `${(m / 3.0857e16).toPrecision(3)} pc`;
+  if (a < 3.0857e22) return `${(m / 3.0857e19).toPrecision(3)} kpc`;
+  return `${(m / 3.0857e22).toPrecision(3)} Mpc`;
+}
+// e+n 지수 표기를 화면에서는 ×10ⁿ 으로 바꾼다
 const fixExp = (str) => str.replace(/(\d(?:\.\d+)?)e([+-]?\d+)/g, (m, a, b) => `${a}×10${sup(parseInt(b, 10))}`);
 export const fmtTime = (s) => fixExp(_fmtTime(s));
 export const fmtLen = (m) => fixExp(_fmtLen(m));

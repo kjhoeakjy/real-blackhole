@@ -54,15 +54,9 @@ a:hover { text-decoration: underline; }
 #brand { display: flex; align-items: baseline; gap: 10px; }
 #brand .mark { font-weight: 650; letter-spacing: 0.02em; font-size: 15px; }
 #brand .sub { color: var(--text-3); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-nav#tabs { display: flex; gap: 2px; margin-left: 12px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(10,12,17,.55); }
-nav#tabs button { padding: 6px 14px; border-radius: 999px; color: var(--text-2); font-size: 13px; letter-spacing: 0.01em; transition: all .18s; }
-nav#tabs button:hover { color: var(--text); }
-nav#tabs button.active { background: rgba(255,255,255,.1); color: #fff; }
 #top .spacer { flex: 1; }
 #clock { font-size: 12px; color: var(--text-2); display: flex; gap: 10px; align-items: center; }
 #clock .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-#live-btn { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--text-2); background: rgba(10,12,17,.55); }
-#live-btn:hover { color: var(--text); border-color: var(--line-2); }
 
 /* ---------- 왼쪽 패널 ---------- */
 #panel { position: fixed; top: 68px; left: 16px; bottom: 16px; width: var(--panel-w); z-index: 15; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.45); overflow: hidden; transition: transform .28s ease, opacity .28s; }
@@ -160,46 +154,11 @@ table.tbl tr.active td { color: var(--accent-2); }
 #hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 15; font-size: 12px; color: var(--text-3); pointer-events: none; text-align: center; letter-spacing: .01em; }
 
 /* 카드(지도에서 선택 시) */
-#card { position: fixed; right: 22px; bottom: 22px; width: 320px; z-index: 16; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 16px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.45); transition: opacity .2s, transform .2s; }
-#card.hidden { display: none; }
-#card .close { position: absolute; top: 10px; right: 12px; color: var(--text-3); font-size: 18px; line-height: 1; }
 
 /* ---------- 게임 HUD ---------- */
-#hud { position: fixed; inset: 0; z-index: 14; pointer-events: none; display: none; }
-#hud.on { display: block; }
-#hud .tau { position: absolute; left: 50%; top: 76px; transform: translateX(-50%); text-align: center; }
-#hud .tau .big { font-size: 34px; font-weight: 500; letter-spacing: -0.02em; }
-#hud .tau .lab { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
-#hud .readout { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); display: flex; gap: 28px; text-align: center; }
-#hud .readout .l { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); }
-#hud .readout .v { font-size: 16px; }
-#hud .timeline { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); width: min(720px, 80vw); height: 34px; }
-#hud .timeline .bar { position: absolute; left: 0; right: 0; top: 16px; height: 2px; background: var(--line-2); }
-#hud .timeline .fill { position: absolute; left: 0; top: 16px; height: 2px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-#hud .timeline .mark { position: absolute; top: 11px; width: 1px; height: 12px; background: var(--text-3); }
-#hud .timeline .mark.main { background: var(--accent-2); width: 2px; }
-#hud .timeline .mark.horizon { background: var(--cool); }
-#hud .timeline .mark i { position: absolute; top: 14px; left: 0; transform: translateX(-50%); font-style: normal; font-size: 10px; color: var(--text-3); white-space: nowrap; }
-#hud .timeline .mark.main i { color: var(--accent-2); }
-#hud .timeline .mark.horizon i { color: var(--cool); }
-#hud .stretch { position: absolute; right: 26px; top: 50%; transform: translateY(-50%); width: 18px; height: 220px; border: 1px solid var(--line-2); border-radius: 9px; overflow: hidden; }
-#hud .stretch .f { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(var(--danger), var(--accent)); }
-#hud .stretch-l { position: absolute; right: 54px; top: 50%; transform: translateY(-50%) rotate(180deg); writing-mode: vertical-rl; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
-#hud .event { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .3s; }
-#hud .event.show { opacity: 1; }
-#hud .event .t { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; text-shadow: 0 2px 20px rgba(0,0,0,.8); }
-#hud .event .s { font-size: 13px; color: var(--text-2); margin-top: 4px; }
 #flash { position: fixed; inset: 0; z-index: 13; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.2s; }
 
 /* 오른쪽 실시간 서랍 */
-#drawer { position: fixed; top: 68px; right: 16px; bottom: 16px; width: 360px; z-index: 17; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.45); padding: 18px 20px; overflow-y: auto; transform: translateX(calc(100% + 24px)); opacity: 0; transition: transform .28s ease, opacity .28s; }
-#drawer.open { transform: none; opacity: 1; }
-#drawer .close { position: absolute; top: 12px; right: 14px; color: var(--text-3); font-size: 18px; }
-.status { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
-.status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); flex: none; }
-.status .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-.status .dot.warn { background: var(--accent); }
-.status .dot.err { background: var(--danger); }
 table.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
 table.tbl th { text-align: left; font-weight: 500; color: var(--text-3); padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 11px; letter-spacing: .06em; }
 table.tbl td { padding: 5px 0; border-bottom: 1px solid var(--line); }
@@ -254,5 +213,22 @@ details.refs li { margin: 2px 0; }
 
 /* 유리 효과: 캔버스가 매 프레임 바뀌면 blur 도 매 프레임 다시 계산되므로, 마우스가 있는 큰 화면에서만 약하게 */
 @media (hover: hover) and (min-width: 900px) {
-  #panel, #card, #drawer, nav#tabs, #live-btn, #panel-toggle { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  #panel, #panel-toggle { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 }
+
+/* 여행 패널 */
+.ctl select, .ctl input[type=number] { width: 100%; min-width: 0; font-size: 14px; padding: 8px 10px; }
+.ctl select { grid-column: 2 / 4; }
+.bigp { margin: 14px 0 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, rgba(233,166,91,.08), rgba(233,166,91,.02)); }
+.bigp .l { font-size: 11px; letter-spacing: .1em; color: var(--text-3); text-transform: uppercase; }
+.bigp .v { font-size: 34px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; margin-top: 2px; }
+.bigp .bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.08); margin-top: 10px; overflow: hidden; }
+.bigp .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+#labels .lbl.star { color: #cfe0ff; }
+.ev { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; background: rgba(255,255,255,.02); }
+.ev .t { font-size: 13.5px; font-weight: 600; }
+.ev .d { font-size: 12px; color: var(--text-2); margin: 4px 0 8px; line-height: 1.5; }
+.ev .chips { gap: 6px; }
+.ev .fx { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
+.ev.danger { border-color: rgba(233,106,91,.35); }
+.ev.ok { border-color: rgba(120,200,140,.35); }

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>실제 블랙홀</title>
-<meta name="description" content="실제 측정값으로 만든 블랙홀 체험. 지금 이 순간의 태양계에서 은하 너머까지, 일반상대론 광선추적, 실제 물체를 블랙홀에 집어넣기.">
-<meta property="og:title" content="실제 블랙홀">
-<meta property="og:description" content="실제 측정값·논문 수치로 만든 블랙홀 체험">
+<title>우주 여행</title>
+<meta name="description" content="지금 이 순간의 실제 우주에서 출발지와 목적지를 고르면, 실제 탈것의 속도로 얼마나 걸리는지와 살아서 돌아올 확률을 계산해요. 블랙홀은 일반상대론 광선추적으로 봐요.">
+<meta property="og:title" content="우주 여행">
+<meta property="og:description" content="실제 측정값으로 계산한 우주 여행 시간과 생존 확률">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,39 +26,16 @@
 <div id="flash"></div>
 
 <header id="top">
-  <div id="brand"><span class="mark">실제 블랙홀</span><span class="sub">Real black holes</span></div>
-  <nav id="tabs">
-    <button data-mode="map" class="active">지도</button>
-    <button data-mode="view">보기</button>
-    <button data-mode="drop">집어넣기</button>
-    <button data-mode="build">만들기</button>
-  </nav>
+  <div id="brand"><span class="mark">우주 여행</span><span class="sub">Real space travel</span></div>
   <div class="spacer"></div>
   <div id="clock"><span class="dot"></span><span class="num" id="clock-text">—</span></div>
-  <button id="live-btn">실시간 ·</button>
 </header>
 
 <aside id="panel"><div id="panel-body"></div></aside>
 <button id="panel-toggle" title="패널 열기">☰</button>
 
-<div id="scale" class="hidden"></div>
-<div id="card" class="hidden"></div>
+<div id="scale"></div>
 <div id="hint"></div>
-
-<div id="hud">
-  <div class="tau"><div class="lab">물체의 시계 · 고유시간</div><div class="big num" id="hud-tau">0</div></div>
-  <div class="event" id="hud-event"><div class="t"></div><div class="s"></div></div>
-  <div class="readout">
-    <div><div class="l">중심까지</div><div class="v num" id="hud-r">—</div></div>
-    <div><div class="l">조석 기울기</div><div class="v num" id="hud-k">—</div></div>
-    <div><div class="l">머리–발 가속도 차</div><div class="v num" id="hud-g">—</div></div>
-  </div>
-  <div class="stretch-l">늘임</div>
-  <div class="stretch"><div class="f" id="hud-stretch" style="height:0%"></div></div>
-  <div class="timeline" id="hud-timeline"><div class="bar"></div><div class="fill" id="hud-fill" style="width:0%"></div></div>
-</div>
-
-<aside id="drawer"><button class="close" id="drawer-close">×</button><div id="drawer-body"></div></aside>
 
 <div id="loading"><div class="ring"></div><div class="msg" id="loading-msg">자료를 불러오는 중</div></div>
 <div id="error"><div class="box"><h2>실행할 수 없어요</h2><p class="note" id="error-msg"></p></div></div>

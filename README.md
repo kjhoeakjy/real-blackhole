@@ -1,46 +1,25 @@
-# 실제 블랙홀 (Real black holes)
+# 우주 여행 · 지구로 돌아가기
 
-실제 측정값과 논문 수치로 만든 블랙홀 체험. 브라우저에서 바로 열려요: **https://kjhoeakjy.github.io/real-blackhole/**
+지금 이 순간의 실제 우주 어딘가에서 출발해 지구로 무사히 돌아오는 게임. 모든 거리·속도·위험은 측정값과 공식 문서의 숫자를 쓴다.
 
-- **지도** — 지금 이 순간의 태양계(실시간 행성 위치)에서 출발해 은하수, 안드로메다, M87, 그 너머까지 로그 거리로 이어지는 우주 지도. 실제 블랙홀 27개가 논문 좌표에 표시돼요.
-- **보기** — 일반상대론 광선추적(WebGL2)으로 본 블랙홀. 커 블랙홀의 측지선을 커–실드 좌표에서 적분하고, 강착원반은 노비코프–손 온도 분포에 도플러·중력 적색편이를 적용해요. 중력렌즈로 휜 별하늘은 히파르코스 별 41,411개.
-- **집어넣기** — 사람, 소행성 베누, 달, 지구, 화성, 목성, 태양, 백색왜성, 중성자별을 실제 블랙홀의 자전축 위에서 놓고, 완전히 분해될 때까지의 고유시간을 맞혀요. 그 뒤 물체의 눈으로 떨어지는 장면을 봐요 (지평선 안쪽까지).
-- **만들기** — 질량과 스핀을 고르면 지평선·ISCO·호킹 온도·증발 시간·조석장 등 실제 물리량이 나오고, 바로 보거나 집어넣릴 수 있어요.
-- **실시간** — 현재 위치에서 본 블랙홀들의 고도, JPL Horizons 와 행성 위치 교차검증, GraceDB 의 최근 공개 중력파 이벤트.
+https://kjhoeakjy.github.io/real-blackhole/
 
-## 구조
+## 무엇을 하나
+- **출발지**: 달·행성(지금 위치, VSOP87), 가까운 별·외계행성(Gaia 시차), 블랙홀 곁(각 논문의 질량·거리), 다른 은하.
+- **탈것**: 아폴로(10.8 km/s), 보이저 1호(17 km/s), 파커 태양 탐사선(191 km/s, 인류 최고 속도), 가상의 광속 비율.
+- **가는 길의 선택**: 태양 폭풍(1972년 8월급 사건, 대피실/그냥), 소행성대(충돌 확률 10⁻⁹), 목성 방사선대·중력 도움, 성간 먼지(Hoang 2017), 무중력 뼈 손실, 대기 재진입(1/180).
+- **결과**: 걸리는 시간(여행자 시계·지구 시계), 도착 날짜와 나이, 우주 방사선 피폭(RAD 1.84 mSv/일), 무사 귀환 확률 = 수명 × 피폭 × 블랙홀 탈출 × 선택 × 재진입.
+- **블랙홀 곁 출발**: 거리를 고르면 머리–발 중력 차와 탈출 가능성, "블랙홀 보기"로 커 블랙홀 광선추적 화면.
 
+## 구조 (빌드 없음, 정적)
 ```
-index.html            화면
-src/app.js            진입점, 모드 전환, 렌더 루프
-src/ui/               지도·보기·집어넣기·만들기·실시간 패널, 스타일
-src/scene/bh-shader.js  커 블랙홀 광선추적 셰이더 (GLSL ES 3.00)
-src/scene/bh-renderer.js  WebGL2 렌더러, 관측자 사면체, 하늘 텍스처
-src/scene/bh-view.js    궤도 카메라, 적응형 해상도, 낙하 카메라
-src/scene/map.js        three.js 우주 지도 (태양계 / 은하 / 원거리 3층)
-src/physics/            상수(CODATA 2018), 커 기하·자유낙하·조석장·호킹 복사, 낙하 시나리오, 원반 온도
-src/data/               블랙홀 카탈로그 보조정보, 집어넣을 물체와 파괴 기준
-data/                   blackholes.json(27개, 출처 포함), 히파르코스 별, 은하수 윤곽
-research/               조사 노트 (블랙홀 측정값, 조석 파괴 물리)
-vendor/                 three.js 0.170, OrbitControls, astronomy-engine 2.1.19
+index.html, src/app.js        진입점, 지도 ↔ 블랙홀 화면, 렌더 루프
+src/ui/trip-mode.js           패널 UI, 경로 연출, 라벨
+src/data/destinations.js      출발지·탈것
+src/data/hazards.js           가는 길의 위험과 선택지 (출처 포함)
+src/physics/trip.js           시간·시간 지연·피폭·수명·블랙홀·재진입 → 확률
+src/physics/gr.js, disk.js    커 블랙홀 지평선·조석장, 강착원반 온도
+src/scene/map.js              태양계(실시간) → 은하(Reid 2019) → 외부 우주 지도, 별하늘
+src/scene/bh-*.js             WebGL2 커 블랙홀 광선추적
+data/blackholes.json          블랙홀 카탈로그 27개 (research/ 에 출처)
 ```
-
-빌드 과정 없이 정적 파일만으로 동작해요. 로컬에서는 `python3 -m http.server` 같은 정적 서버로 열면 돼요 (fetch 를 쓰므로 file:// 로는 안 열려요).
-
-## 물리
-
-- 측지선: 해밀토니안 H = ½ g^{μν} p_μ p_ν, 커–실드 직교좌표, 해석적 ∂H/∂x, RK4. 지평선에서 정칙이라 지평선 안쪽에서 본 장면도 그대로 계산돼요.
-- 원반: 얇은 원반, 내경 = ISCO (Bardeen, Press & Teukolsky 1972), 온도 T ∝ r^{-3/4}(1−√(r_in/r))^{1/4}, 케플러 4-속도로 적색편이 인자 g 계산, 밝기 g⁴. 온도 스케일 T* = (3GMṀ/8πσr_in³)^{1/4}, Ṁ = λL_Edd/(ηc²).
-- 낙하: 자전축 위 자유낙하 (dr/dτ)² = E² − 1 + 2Mr/(r²+a²), 정지 출발. 조석장 k_r = 2GM·r(r²−3a²)/(r²+a²)³ (축 위 정확식, Ψ₂ 로부터).
-- 분해 기준: 물체별 k_crit (사람은 허리 장력 ≈ 1.5×10⁴ N, 천체는 η·r_t, 태양은 Ryu et al. 2020 맞춤식), 미시 단계(분자 → 원자 → 핵 → 하드론 → 플랑크)는 research/disruption-physics.md 의 표.
-- 호킹: T = ħc³/(4πGMk_B)·√(1−a*²)/(1+√(1−a*²)), 증발 t = 5120πG²M³/(ħc⁴) (광자만).
-
-## 자료 출처
-
-블랙홀 측정값은 `data/blackholes.json` 의 각 항목 `refs` 에, 조사 요약은 `research/black-holes.md` 에 있어요. 주요 출처: GRAVITY Collaboration 2022 (Sgr A* 질량·거리), EHT 2019/2022/2024 (M87*, Sgr A* 영상), Miller-Jones et al. 2021 (Cyg X-1), El-Badry et al. 2023 / Gaia Collaboration 2024 (Gaia BH1–3), LVK GWTC-4.0/5.0 (중력파), Reid et al. 2019 (은하 나선팔), Bland-Hawthorn & Gerhard 2016 (은하 구조).
-
-스핀이 측정되지 않은 천체는 화면에 "가정" 으로 표시하고, 집어넣기 게임에서는 0 으로 둬요. Phoenix A 의 질량은 측정이 아니라 모형 추정이라 따로 표시해요.
-
-## 라이선스
-
-코드: MIT. three.js (MIT, `vendor/LICENSE.three`), astronomy-engine (MIT), 별·은하수 자료는 d3-celestial (BSD-3, `data/LICENSE.d3-celestial`).

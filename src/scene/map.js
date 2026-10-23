@@ -153,6 +153,7 @@ const PLANETS = [
   { body: 'Mercury', name: '수성', color: 0xb5b0a8, period: 87.969, radiusKm: 2439.7 },
   { body: 'Venus', name: '금성', color: 0xe6d4a8, period: 224.701, radiusKm: 6051.8 },
   { body: 'Earth', name: '지구', color: 0x6fa0e8, period: 365.256, radiusKm: 6371 },
+  { body: 'Moon', name: '달', color: 0xc9c6c0, period: 27.3217, radiusKm: 1737.4, noOrbit: true },
   { body: 'Mars', name: '화성', color: 0xd3764a, period: 686.98, radiusKm: 3389.5 },
   { body: 'Jupiter', name: '목성', color: 0xd9b48c, period: 4332.59, radiusKm: 69911 },
   { body: 'Saturn', name: '토성', color: 0xe8d6a0, period: 10759.22, radiusKm: 58232 },
@@ -251,6 +252,9 @@ export class UniverseMap {
         const ring = new THREE.Mesh(new THREE.RingGeometry(1.24, 2.27, 96), new THREE.MeshStandardMaterial({ color: 0xcdbb95, roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
         ring.rotation.x = 26.7 * DEG; m.add(ring);
       }
+      this.labels.push({ kind: 'planet', obj: s, text: p.name, layer: 'solar' });
+      this.pick.push({ kind: 'planet', obj: s, data: p, layer: 'solar' });
+      if (p.noOrbit) continue;
       // 궤도: 한 공전주기를 256 점으로
       const pts = [];
       const T0 = this.now.getTime();
@@ -261,8 +265,6 @@ export class UniverseMap {
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: p.color, transparent: true, opacity: 0.35 }));
       solar.add(line);
-      this.labels.push({ kind: 'planet', obj: s, text: p.name, layer: 'solar' });
-      this.pick.push({ kind: 'planet', obj: s, data: p, layer: 'solar' });
     }
     this.labels.push({ kind: 'sun', obj: sun, text: '태양', layer: 'solar' });
     this.layers.solar = { scene: solar, unit: AU, opacity: 1 };
@@ -280,7 +282,7 @@ export class UniverseMap {
     gal.add(new THREE.Points(geo, this.galMat));
     // 태양 표시 + 블랙홀 마커
     const sunMark = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xfff6d8, depthWrite: false }));
-    sunMark.scale.setScalar(0.08); gal.add(sunMark);
+    sunMark.scale.setScalar(0.08); gal.add(sunMark); this.sunMark = sunMark;
     this.labels.push({ kind: 'sun', obj: sunMark, text: '태양 (우리)', layer: 'gal' });
     this.bhSprites = [];
     for (const bh of this.catalog) {
@@ -297,7 +299,31 @@ export class UniverseMap {
       this.pick.push({ kind: 'bh', obj: sp, data: bh, layer: far ? 'cosmic' : 'gal' });
       if (!far) gal.add(sp);
     }
+    // 별·외계행성 목적지
+    this.starSprites = [];
+    for (const st of this.opts.stars || []) {
+      const u = radecToGalUnit(st.ra, st.dec);
+      const d = st.distPc / 1e3;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xdde6ff, depthWrite: false, depthTest: false, transparent: true }));
+      sp.position.set(u[0] * d, u[1] * d, u[2] * d);
+      sp.userData = { star: st, id: st.id };
+      sp.renderOrder = 9;
+      gal.add(sp); this.starSprites.push(sp);
+      this.labels.push({ kind: 'star', obj: sp, text: st.name, layer: 'gal', data: st });
+      this.pick.push({ kind: 'star', obj: sp, data: st, layer: 'gal' });
+    }
     this.layers.gal = { scene: gal, unit: KPC, opacity: 1 };
+    // 여행 경로 (층마다 선 하나와 탈것 표시 하나)
+    this.route = null;
+    this.routeObjs = {};
+    for (const key of ['solar', 'gal', 'cosmic']) {
+      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xe9a65b, transparent: true, opacity: 0.0, depthTest: false }));
+      line.renderOrder = 20; line.userData = { route: true };
+      const ship = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xffd9a0, depthWrite: false, depthTest: false, transparent: true, opacity: 0 }));
+      ship.renderOrder = 21; ship.userData = { ship: true };
+      this.routeObjs[key] = { line, ship };
+    }
 
     // ===== 원거리 층 (단위 Mpc) =====
     const cos = new THREE.Scene();
@@ -321,10 +347,12 @@ export class UniverseMap {
     }
     for (const b of this.bhSprites) if (b.layer === 'cosmic') cos.add(b.sprite);
     this.layers.cosmic = { scene: cos, unit: MPC, opacity: 1 };
+    for (const key in this.routeObjs) { this.layers[key].scene.add(this.routeObjs[key].line); this.layers[key].scene.add(this.routeObjs[key].ship); }
   }
 
   _helioGal(body, date) {
-    const v = A.HelioVector(A.Body[body], date);
+    let v = A.HelioVector(A.Body[body === 'Moon' ? 'Earth' : body], date);
+    if (body === 'Moon') { const m = A.GeoMoon(date); v = new A.Vector(v.x + m.x, v.y + m.y, v.z + m.z, v.t); }
     const r = A.RotateVector(ROT_EQJ_GAL, v);
     return [r.x, r.y, r.z];
   }
@@ -373,7 +401,13 @@ export class UniverseMap {
     this.flyTo(tiltDir(d, 0.95), Math.log10(p.radiusKm * 1e3 * 7), false); // 낮과 밤의 경계가 보이도록 55° 비스듬히
   }
   // 태양으로 복귀
-  focusSun() { this.focusBody = null; this._focusHome = true; }
+  focusSun() { this.focusBody = null; this.focusTarget = new THREE.Vector3(0, 0, 0); }
+  // 임의의 점(미터)으로 초점 이동
+  setFocus(v) { this.focusBody = null; this.focusTarget = v.clone(); this._needsRender = true; }
+  // 여행 경로: A → B (미터). t 는 탈것의 진행도 0..1
+  setRoute(A, B) { this.route = { A: A.clone(), B: B.clone(), t: 0 }; this._needsRender = true; }
+  setShip(t) { if (this.route) { this.route.t = t; this._needsRender = true; } }
+  clearRoute() { this.route = null; this._needsRender = true; }
   // 카메라 방향(단위 벡터)과 로그 거리로 이동. OrbitControls 는 카메라 위치의 방향만 쓰므로 위치를 직접 바꾼다.
   flyTo(dir, logDist, instant = false) {
     this.zoomTo(logDist);
@@ -399,12 +433,16 @@ export class UniverseMap {
     // 아무것도 안 움직이면 다시 그리지 않는다 (행성 위치 갱신·창 크기·이동 요청은 _needsRender 로 깨운다)
     const sig = [dir.x, dir.y, dir.z, this.logDist, this.focus.x, this.focus.y, this.focus.z];
     const same = this._sig && sig.every((v, i) => Math.abs(v - this._sig[i]) < 1e-9 * (1 + Math.abs(v)));
-    if (same && !this._needsRender && !this._flyDir && !this.focusBody && !this._focusHome) { this._dir = dir; this._D = D; return; }
+    if (same && !this._needsRender && !this._flyDir && !this.focusBody && !this.focusTarget) { this._dir = dir; this._D = D; return; }
     this._sig = sig; this._needsRender = false;
     // 행성에 붙어 있을 때는 궤도선을 감춘다 (화면을 가로지르는 줄이 되므로)
     this._orbitFade = THREE.MathUtils.lerp(this._orbitFade ?? 1, this.focusBody ? 0 : 1, Math.min(1, dt * 4));
     // 행성을 따라가다 멀리 나가면 태양으로 돌아온다
-    if ((this.focusBody && this.logDist > 12.6) || this._focusHome) { this.focusBody = null; this.focus.multiplyScalar(Math.max(0, 1 - dt * 5)); if (this.focus.length() < 1e3) { this.focus.set(0, 0, 0); this._focusHome = false; } }
+    if (this.focusBody && this.logDist > 12.6) { this.focusBody = null; this.focusTarget = new THREE.Vector3(0, 0, 0); }
+    if (this.focusTarget) {
+      this.focus.lerp(this.focusTarget, Math.min(1, dt * 5));
+      if (this.focus.distanceTo(this.focusTarget) < 1e-6 * (1 + this.focusTarget.length())) { this.focus.copy(this.focusTarget); this.focusTarget = null; }
+    }
     const r = this.renderer;
     r.clear(true, true, true);
     if (this.skyScene) {
@@ -430,6 +468,20 @@ export class UniverseMap {
       this.camera.lookAt(f);
       // 스프라이트 크기: 화면에서 일정한 픽셀 크기가 되도록 거리 비례
       const px = dUnits * 0.018;
+      // 여행 경로를 이 층의 단위로
+      const RO = this.routeObjs[key];
+      if (RO) {
+        const on = !!this.route;
+        RO.line.material.opacity = on ? 0.55 * alpha : 0; RO.ship.material.opacity = on ? alpha : 0;
+        RO.line.visible = on; RO.ship.visible = on;
+        if (on) {
+          const a = this.route.A.clone().divideScalar(L.unit), b = this.route.B.clone().divideScalar(L.unit);
+          const pos = RO.line.geometry.attributes.position;
+          pos.setXYZ(0, a.x, a.y, a.z); pos.setXYZ(1, b.x, b.y, b.z); pos.needsUpdate = true;
+          RO.line.geometry.computeBoundingSphere();
+          RO.ship.position.copy(a.lerp(b, this.route.t));
+        }
+      }
       L.scene.traverse((o) => {
         if (o.isSprite) {
           const ud = o.userData || {};
@@ -441,8 +493,10 @@ export class UniverseMap {
             o.scale.setScalar(Math.max(px * 0.55 * vis, 0.00001));
             o.material.userData.baseOpacity = vis;
           }
+          else if (ud.ship) o.scale.setScalar(px * 0.8);
           else if (ud.id) o.scale.setScalar(px * 1.1);
           else if (o === this.sunSprite) o.scale.setScalar(Math.max(px * 1.4, 0.0093 * 2));
+          else if (o === this.sunMark) o.scale.setScalar(px * 1.3);
           if (o.material) o.material.opacity = (o.material.userData?.baseOpacity ?? 1) * alpha;
         }
         if (o.isLine && o.material) o.material.opacity = 0.35 * alpha * (key === 'solar' ? this._orbitFade : 1);
@@ -487,7 +541,7 @@ export class UniverseMap {
       if (lb.kind === 'planet' && angular < 0.004 && this.focusBody !== lb.obj.userData?.body) continue;
       if (lb.kind === 'sun' && lb.layer === 'solar' && this.focusBody) continue;
       if (lb.kind === 'bh' && lb.layer === 'gal' && angular < 0.003 && lb.bh.id !== 'sgr-a-star') continue;
-      out.push({ x, y, text: lb.text, kind: lb.kind, alpha, data: lb.bh || lb.obj.userData, angular });
+      out.push({ x, y, text: lb.text, kind: lb.kind, alpha, data: lb.bh || lb.data || lb.obj.userData, angular });
     }
     return out;
   }
@@ -496,7 +550,7 @@ export class UniverseMap {
   pickAt(px, py, maxPx = 22) {
     let best = null, bd = maxPx;
     for (const lb of this.projectLabels()) {
-      if (lb.kind !== 'bh' && lb.kind !== 'planet') continue;
+      if (lb.kind !== 'bh' && lb.kind !== 'planet' && lb.kind !== 'star') continue;
       const d = Math.hypot(lb.x - px, lb.y - py);
       if (d < bd) { bd = d; best = lb; }
     }
