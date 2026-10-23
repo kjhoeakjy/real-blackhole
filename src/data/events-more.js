@@ -124,7 +124,7 @@ export const MORE_EVENTS = [
     src: IMAGINE + ' · 영감: 미지와의 조우 (1977)',
     when: (v) => v.s.tau > 60 * DAY && !v.s.flags.abductors, rate: (v) => 0.08,
     options: [
-      { label: '에어록을 연다', hint: '그들이 들어올 수도, 우리를 데려갈 수도 있어요.', go: (v) => { const r = R(); if (r < 0.4) return { text: '아무도 들어오지 않았어요. 아침에 에어록 바닥에 상자가 있었어요. 우리 식량과 같은 포장. 석 달치.', food: 90, morale: 0.1, flag: 'abductors' }; if (r < 0.7) return { text: '빛이 들어왔고 다음 기억은 침대예요. 시계가 여섯 달 앞으로 가 있고, 창밖 별자리가 달라요. 지구가 훨씬 가까워요.', jump: 0.3, delay: 180 * DAY, flag: 'abductors', fx: 'flash' }; if (many(v) && r < 0.85) { who(v); return { text: `아침에 ${him(v)}의 침낭이 비어 있었어요. 그 사람 신발은 에어록 앞에 나란히 놓여 있었어요.`, crewLost: 1, lost: v._m, morale: -0.3, flag: 'abductors' }; } return { text: '아무 일도 없었어요. 그들은 한 시간 뒤 사라졌어요. 에어록은 밤새 열려 있었어요.', morale: -0.1, flag: 'abductors' }; } },
+      { label: '에어록을 연다', hint: '그들이 들어올 수도, 우리를 데려갈 수도 있어요.', go: (v) => { const r = R(); if (r > 0.93) return { death: '에어록이 열리자 빛이 들어왔어요. 배는 다음 날 텅 빈 채 발견됐을 거예요. 아무도 발견하지 않았겠지만.' }; if (r < 0.4) return { text: '아무도 들어오지 않았어요. 아침에 에어록 바닥에 상자가 있었어요. 우리 식량과 같은 포장. 석 달치.', food: 90, morale: 0.1, flag: 'abductors' }; if (r < 0.7) return { text: '빛이 들어왔고 다음 기억은 침대예요. 시계가 여섯 달 앞으로 가 있고, 창밖 별자리가 달라요. 지구가 훨씬 가까워요.', jump: 0.3, delay: 180 * DAY, flag: 'abductors', fx: 'flash' }; if (many(v) && r < 0.85) { who(v); return { text: `아침에 ${him(v)}의 침낭이 비어 있었어요. 그 사람 신발은 에어록 앞에 나란히 놓여 있었어요.`, crewLost: 1, lost: v._m, morale: -0.3, flag: 'abductors' }; } return { text: '아무 일도 없었어요. 그들은 한 시간 뒤 사라졌어요. 에어록은 밤새 열려 있었어요.', morale: -0.1, flag: 'abductors' }; } },
       { label: '불을 다 끄고 숨는다', hint: '그들이 레이더에 안 잡힌다면 우리도 안 보일지 몰라요.', go: (v) => chance(0.7) ? { text: '두 시간을 어둠 속에서 보냈어요. 그들은 천천히 멀어졌어요.', morale: -0.05, flag: 'abductors' } : { text: '불을 꺼도 그들은 창 앞에 있었어요. 새벽에 사라졌어요. 선체 바깥에 손 자국 같은 것이 남았어요.', morale: -0.15, flag: 'abductors', flag2: 'contact' } },
       { label: '착륙등으로 같은 순서를 돌려보낸다', hint: '인사일지 도발일지 몰라요.', go: (v) => chance(0.6) ? { text: '그들의 불빛이 멈췄다가 새 순서로 깜빡였어요. 세 번. 그리고 떠났어요. 그 순서를 적어 뒀어요.', morale: 0.15, flag: 'abductors', flag2: 'contact' } : { text: '불빛이 꺼졌어요. 배가 한 번 크게 흔들렸고 그들은 없었어요. 안테나가 휘었어요.', hull: -0.08, flag: 'abductors' } },
     ],
@@ -135,7 +135,7 @@ export const MORE_EVENTS = [
     src: IMAGINE,
     when: (v) => v.s.tau > 30 * DAY && !v.s.flags.face, rate: (v) => 0.06,
     options: [
-      { label: '마주 본다', hint: '움직이지 않는 게 나을지도 몰라요.', go: (v) => chance(0.7) ? { text: '한참을 서로 봤어요. 그것이 먼저 고개를 조금 기울였어요. 그리고 뒤로 멀어져 사라졌어요.', morale: 0.05, flag: 'face', flag2: 'contact' } : { text: '그것이 손을 뻗어 내 헬멧을 건드렸어요. 산소 경보가 울렸어요. 안으로 뛰어들었어요.', health: -0.1, morale: -0.15, flag: 'face', flag2: 'contact' } },
+      { label: '마주 본다', hint: '움직이지 않는 게 나을지도 몰라요.', go: (v) => chance(0.06) ? { death: '그것이 손을 뻗어 헬멧을 잡았어요. 줄이 끊기는 소리가 났고, 배가 천천히 멀어졌어요.' } : chance(0.7) ? { text: '한참을 서로 봤어요. 그것이 먼저 고개를 조금 기울였어요. 그리고 뒤로 멀어져 사라졌어요.', morale: 0.05, flag: 'face', flag2: 'contact' } : { text: '그것이 손을 뻗어 내 헬멧을 건드렸어요. 산소 경보가 울렸어요. 안으로 뛰어들었어요.', health: -0.1, morale: -0.15, flag: 'face', flag2: 'contact' } },
       { label: '눈을 감고 열까지 센다', hint: '환각이면 사라져요.', go: (v) => chance(0.5) ? { text: '열에 눈을 떴어요. 없었어요. 손목 카메라에는 아무것도 없었어요.', morale: -0.05, flag: 'face' } : { text: '열에 눈을 떴어요. 더 가까이 있었어요. 카메라에는 빛 번짐만 남았어요.', morale: -0.15, flag: 'face', flag2: 'contact' } },
       { label: '손목 카메라를 켠다', hint: '증거가 남을지도 몰라요.', go: (v) => chance(0.3) ? { text: '찍혔어요. 흐리지만 눈 두 개가 분명해요. 그 사진은 식탁 위에 두지 않기로 했어요.', flag: 'face', flag2: 'contact', morale: 0.05 } : { text: '카메라를 드는 사이 사라졌어요. 사진엔 내 손만 있어요.', flag: 'face' } },
     ],
@@ -179,7 +179,7 @@ export const MORE_EVENTS = [
     src: IMAGINE + ' · 영감: 컨택트 (2016), 스타 트렉 IV',
     when: (v) => v.s.tau > 150 * DAY && !v.s.flags.whale, rate: (v) => 0.04,
     options: [
-      { label: '같은 소리를 돌려보낸다', hint: '스피커를 안테나에 물려요.', go: (v) => chance(0.7) ? { text: '소리가 멈췄다가 더 길게 돌아왔어요. 두 시간 동안 번갈아 울었어요. 그것이 지나간 뒤 배가 조금 더 빨라져 있었어요.', vFactor: 1.05, morale: 0.2, flag: 'whale', flag2: 'contact' } : { text: '소리가 커졌어요. 배가 종처럼 울렸어요. 창 두 장에 금이 갔어요.', hull: -0.1, morale: -0.1, flag: 'whale', flag2: 'contact' } },
+      { label: '같은 소리를 돌려보낸다', hint: '스피커를 안테나에 물려요.', go: (v) => chance(0.08) ? { death: '소리가 너무 가까워졌어요. 배가 종처럼 울리다 창이 전부 깨졌어요.' } : chance(0.7) ? { text: '소리가 멈췄다가 더 길게 돌아왔어요. 두 시간 동안 번갈아 울었어요. 그것이 지나간 뒤 배가 조금 더 빨라져 있었어요.', vFactor: 1.05, morale: 0.2, flag: 'whale', flag2: 'contact' } : { text: '소리가 커졌어요. 배가 종처럼 울렸어요. 창 두 장에 금이 갔어요.', hull: -0.1, morale: -0.1, flag: 'whale', flag2: 'contact' } },
       { label: '엔진을 끄고 조용히 있는다', hint: '', go: (v) => ({ text: '그림자는 한나절 걸려 지나갔어요. 배 전체가 그 소리에 맞춰 떨렸어요. 다들 바닥에 누워 들었어요.', morale: 0.1, delay: DAY / 2, flag: 'whale', flag2: 'contact' }) },
       { label: '속도를 올려 벗어난다', hint: '연료를 써요.', go: (v) => ({ text: '뒤로 멀어졌어요. 소리는 사흘 더 라디오에 남았어요.', fuel: -0.05, flag: 'whale' }) },
     ],
