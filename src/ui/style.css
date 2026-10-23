@@ -361,3 +361,17 @@ details.refs li { margin: 2px 0; }
 #card .art .dots i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--cat); opacity: .5; animation: drift 6s linear infinite; }
 @keyframes drift { from { transform: translateY(0); opacity: .6; } to { transform: translateY(-80px); opacity: 0; } }
 @media (max-width: 860px) { #card .art { height: 70px; margin: -16px -16px 12px; } #card .art svg { width: 80px; height: 80px; } #prologue .lines p { font-size: 21px; } #prologue .lines p.faint { font-size: 17px; } }
+
+/* 창밖 연출·프롤로그 그림·카드 그림·동료 */
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 13; pointer-events: none; }
+#fx.hidden { display: none; }
+#prologue canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#prologue .box { position: relative; margin-top: 26vh; }
+#card .art .pic { position: absolute; right: 10px; bottom: -6px; width: 170px; height: 100px; opacity: .9; }
+#card .art .pic svg { width: 100%; height: 100%; }
+#card .art .pic .bl { animation: blink 1.6s infinite; } #card .art .pic .bl:nth-child(2) { animation-delay: .3s; } #card .art .pic .bl:nth-child(3) { animation-delay: .6s; } #card .art .pic .bl:nth-child(4) { animation-delay: .9s; } #card .art .pic .bl:nth-child(5) { animation-delay: 1.2s; }
+#card .mates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+#card .mates span { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
+#card .mates span em { font-style: normal; color: var(--text-3); margin-left: 4px; }
+#card .mates span.gone { text-decoration: line-through; opacity: .5; }
+@media (max-width: 860px) { #card .art .pic { width: 120px; height: 70px; } }

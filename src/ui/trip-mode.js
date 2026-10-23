@@ -7,7 +7,7 @@ import { AU, PC, LY, KPC, MPC, YEAR, DAY, M_SUN, rs } from '../physics/constants
 import { horizons } from '../physics/gr.js';
 import { fmtSolar, fmtKm, fmtSci, esc, el } from './format.js';
 import { tiltDir, radecToGalUnit } from '../scene/map.js';
-import { drawSurface } from '../scene/surface.js';
+import { drawSurface, drawAbduction, drawFx } from '../scene/surface.js';
 
 const TICKS = [
   [7, '10,000 km'], [Math.log10(3.844e8), '달 궤도'], [Math.log10(AU), '1 AU'], [Math.log10(30 * AU), '해왕성 궤도'],
@@ -46,7 +46,20 @@ const ICON = {
   end: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
   sf: '<path d="M12 3l2.2 5.6L20 9.3l-4.5 3.9 1.4 5.8L12 16l-4.9 3 1.4-5.8L4 9.3l5.8-.7z"/>',
 };
-const art = (cat) => `<div class="art">${icon(cat)}<div class="dots">${Array.from({ length: 6 }, (_, i) => `<i style="left:${10 + i * 15}%;bottom:${5 + (i * 37) % 40}px;animation-delay:${-i * 1.1}s"></i>`).join('')}</div></div>`;
+const PIC = {
+  alien: '<svg viewBox="0 0 120 100"><defs><radialGradient id="pg" cx="50%" cy="40%"><stop offset="0" stop-color="#9ad0ff" stop-opacity=".35"/><stop offset="1" stop-color="#9ad0ff" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="48" r="48" fill="url(#pg)"/><path d="M60 8c24 0 38 16 38 36 0 24-22 50-38 50S22 68 22 44C22 24 36 8 60 8z" fill="#1c222c"/><ellipse cx="44" cy="46" rx="13" ry="7" transform="rotate(-18 44 46)" fill="#050608"/><ellipse cx="76" cy="46" rx="13" ry="7" transform="rotate(18 76 46)" fill="#050608"/><circle cx="40" cy="43" r="2" fill="#bfe6ff"/><circle cx="72" cy="43" r="2" fill="#bfe6ff"/></svg>',
+  saucer: '<svg viewBox="0 0 160 100"><ellipse cx="80" cy="70" rx="70" ry="14" fill="#9ad0ff" opacity=".15"/><ellipse cx="80" cy="52" rx="60" ry="12" fill="#0b0d12"/><path d="M50 50q30-28 60 0z" fill="#161a22"/><g fill="#bfe6ff"><circle cx="35" cy="56" r="2.5" class="bl"/><circle cx="55" cy="60" r="2.5" class="bl"/><circle cx="80" cy="62" r="2.5" class="bl"/><circle cx="105" cy="60" r="2.5" class="bl"/><circle cx="125" cy="56" r="2.5" class="bl"/></g><path d="M62 60L40 100h80L98 60z" fill="#9ad0ff" opacity=".12"/></svg>',
+  comet: '<svg viewBox="0 0 160 100"><defs><linearGradient id="ct" x1="0" x2="1"><stop offset="0" stop-color="#bfe6ff" stop-opacity="0"/><stop offset="1" stop-color="#e0f0ff" stop-opacity=".7"/></linearGradient></defs><path d="M0 20Q80 30 128 60L130 70Q70 55 0 40z" fill="url(#ct)"/><circle cx="130" cy="64" r="7" fill="#fff"/></svg>',
+  pod: '<svg viewBox="0 0 160 100"><rect x="50" y="20" width="60" height="70" rx="26" fill="#1a1f29" stroke="#3a4250" stroke-width="2"/><rect x="60" y="30" width="40" height="40" rx="18" fill="#9ad0ff" opacity=".18"/><path d="M80 40a6 6 0 1 0 .1 0M72 54q8-6 16 0" stroke="#bfe6ff" stroke-width="2" fill="none" opacity=".6"/></svg>',
+  crew: '<svg viewBox="0 0 160 100"><circle cx="60" cy="50" r="22" fill="#1c222c"/><circle cx="104" cy="56" r="18" fill="#1c222c"/><rect x="48" y="42" width="24" height="12" rx="6" fill="#9ad0ff" opacity=".35"/><rect x="94" y="50" width="20" height="10" rx="5" fill="#9ad0ff" opacity=".35"/></svg>',
+  rock: '<svg viewBox="0 0 160 100"><path d="M40 60l18-30 34-6 28 22-10 32-40 10z" fill="#2a2420"/><path d="M58 30l8 22-20 10z" fill="#3a332c"/><circle cx="100" cy="56" r="6" fill="#1a1612"/></svg>',
+  earth: '<svg viewBox="0 0 160 100"><circle cx="80" cy="110" r="70" fill="#3f7fe0"/><path d="M30 80q30-30 60-10t50-10" stroke="#8fd1a8" stroke-width="10" fill="none" opacity=".6"/><circle cx="80" cy="110" r="70" fill="none" stroke="#bfe6ff" stroke-width="3" opacity=".5"/></svg>',
+  plant: '<svg viewBox="0 0 160 100"><path d="M80 95V50" stroke="#7fd1a8" stroke-width="3"/><path d="M80 70q-30-10-28-40 28 6 28 40zM80 60q30-14 30-42-30 8-30 42z" fill="#2c6b50"/><circle cx="80" cy="48" r="5" fill="#bfe6ff" opacity=".6"/></svg>',
+  sun: '<svg viewBox="0 0 160 100"><circle cx="40" cy="100" r="60" fill="#ffb347"/><circle cx="40" cy="100" r="70" fill="none" stroke="#ffd56b" stroke-width="2" opacity=".5"/><path d="M90 60q20-30 40-10" stroke="#ffd56b" stroke-width="3" fill="none"/></svg>',
+};
+const PIC_BY_ID = { abductors: 'saucer', traders: 'saucer', bigship: 'saucer', twin: 'saucer', 'window-face': 'alien', 'mate-memory': 'alien', dream: 'alien', stowaway: 'crew', pod: 'pod', derelict: 'pod', whale: 'alien', comet: 'comet', 's-comet': 'comet', oumuamua: 'rock', belt: 'rock', micro: 'rock', debris: 'rock', dust: 'rock', reentry: 'earth', seeds: 'plant', eco: 'plant', spider: 'plant', spe: 'sun', 'solar-ship': 'sun', artifact: 'alien', beacon: 'saucer', dyson: 'saucer' };
+const PIC_BY_CAT = { crew: 'crew', rock: 'rock', earth: 'earth', sun: 'sun', sf: 'alien' };
+const art = (cat, id = '') => `<div class="art">${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]] ? `<div class="pic">${PIC[PIC_BY_ID[id] || PIC_BY_CAT[cat]]}</div>` : icon(cat)}<div class="dots">${Array.from({ length: 6 }, (_, i) => `<i style="left:${10 + i * 15}%;bottom:${5 + (i * 37) % 40}px;animation-delay:${-i * 1.1}s"></i>`).join('')}</div></div>`;
 const icon = (cat) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[cat] || ICON.nav}</svg>`;
 
 export class TripMode {
@@ -60,7 +73,7 @@ export class TripMode {
     this.toast = document.getElementById('toast');
     this.landing = document.getElementById('landing');
     this.ctl = document.getElementById('voy-ctl');
-    this.scene = document.getElementById('scene'); this.interior = document.getElementById('interior'); this.prologue = document.getElementById('prologue');
+    this.scene = document.getElementById('scene'); this.fx = document.getElementById('fx'); this.interior = document.getElementById('interior'); this.prologue = document.getElementById('prologue');
     this._wireCtl();
     window.addEventListener('resize', () => { if (this.sceneOn) this._drawScene(); });
   }
@@ -124,17 +137,38 @@ export class TripMode {
     const pr = this.prologue;
     pr.querySelector('.lines').innerHTML = `<p>눈을 뜬다.</p><p class="faint">마지막 기억은 집 앞의 길, 그리고 하늘에서 내려온 빛.</p><p>여기는 지구가 아니다.</p><p class="faint">그들은 떠났다. 남은 것은 우주선 한 척과 식량.</p><p>지구로 돌아가야 한다.</p>`;
     pr.classList.remove('hidden');
+    const pc = pr.querySelector('canvas'); const t0 = performance.now(); cancelAnimationFrame(this._prRaf);
+    const loop = () => { if (pr.classList.contains('hidden')) return; const dpr = Math.min(devicePixelRatio || 1, 1.5); if (pc.width !== Math.round(innerWidth * dpr)) { pc.width = Math.round(innerWidth * dpr); pc.height = Math.round(innerHeight * dpr); } drawAbduction(pc, (performance.now() - t0) / 1000); this._prRaf = requestAnimationFrame(loop); };
+    this._prRaf = requestAnimationFrame(loop);
     this.ctx.els.panel.classList.add('collapsed');
     const ageEl = pr.querySelector('#p-age'); ageEl.value = this.age;
     ageEl.oninput = (e) => { this.age = Math.min(100, Math.max(1, +e.target.value || 30)); };
     pr.querySelector('#p-go').onclick = () => { pr.classList.add('hidden'); this._wake(); };
+  }
+  // 창밖 연출: 유성·오로라·플레어·그들의 배… 몇 초 동안 fx 캔버스에 그린다
+  _fx(name) {
+    const cv = this.fx; cv.classList.remove('hidden');
+    const dpr = Math.min(devicePixelRatio || 1, 1.5); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    const t0 = performance.now(); cancelAnimationFrame(this._fxRaf);
+    const loop = () => { const t = (performance.now() - t0) / 1000; const alive = drawFx(cv, name, t); if (alive) this._fxRaf = requestAnimationFrame(loop); else { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); cv.classList.add('hidden'); } };
+    this._fxRaf = requestAnimationFrame(loop);
   }
   _drawScene() {
     const dpr = Math.min(devicePixelRatio || 1, 1.5);
     this.scene.width = Math.round(innerWidth * dpr); this.scene.height = Math.round(innerHeight * dpr);
     drawSurface(this.scene, this.route.from, performance.now() / 1000);
   }
+  // 실제 우주 날씨 (NOAA SWPC): 지금 태양이 활발하면 출발 직후 태양 폭풍 확률이 오른다
+  _weather() {
+    if (this._weatherP) return this._weatherP;
+    const get = (u) => fetch(u, { mode: 'cors' }).then((r) => r.json());
+    this._weatherP = Promise.all([get('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json'), get('https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json')])
+      .then(([kp, xr]) => { const k = +kp[kp.length - 1].kp_index; const fl = xr.filter((x) => x.energy === '0.1-0.8nm'); const f = fl.length ? fl[fl.length - 1].flux : 1e-7; const cls = f >= 1e-4 ? 'X' : f >= 1e-5 ? 'M' : f >= 1e-6 ? 'C' : f >= 1e-7 ? 'B' : 'A'; return { kp: k, xray: f, cls, mult: cls === 'X' ? 4 : cls === 'M' ? 2.5 : cls === 'C' ? 1.3 : 0.8, text: `지금 태양: X선 ${cls}급 · 지자기 Kp ${k}` }; })
+      .catch(() => null);
+    return this._weatherP;
+  }
   _wake() {
+    this._weather().then((w) => { if (w && this.voy) this.voy.weather = w; });
     const list = this.starts();
     this.from = list[Math.floor(Math.random() * list.length)].id;
     this._setupRoute();
@@ -193,6 +227,7 @@ export class TripMode {
     this.ship = ship;
     const bh = from.kind === 'bh' ? { massSolar: from.bh.mass, chi: Math.min(0.998, from.bh.spin ?? 0), rOverRg: Math.pow(10, this.bhLogR) * 2 } : null;
     this.voy = new Voyage({ from, A, B, ship, age: this.age, bh });
+    this._weather().then((w) => { if (w && this.voy) { this.voy.weather = w; this.voy.s.log.splice(1, 0, { tau: 0, cat: 'sun', text: `${w.text} (NOAA 실시간)` }); this.shownLog++; this._panelLog(); } });
     const total = this.voy.remaining();
     const horizon = Math.min(total, MAX_LIFE_YEARS * YEAR);
     this.simRate = Math.max(60, horizon / PLAY_SECONDS);   // 배 시계 초 / 실제 초
@@ -226,18 +261,21 @@ export class TripMode {
     const v = this.voy, p = v.pending, s = v.s;
     const [catName, color] = CAT[p.ev.cat] || CAT.nav;
     this.card.style.setProperty('--cat', color);
-    const html = `${art(p.ev.cat)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
+    if (p.ev.fx) this._fx(p.ev.fx);
+    const html = `${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
       <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
     this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });
   }
   _pick(i) {
     const v = this.voy;
+    this._lastEvId = v.pending?.ev.id;
     const r = v.choose(i);
     if (!r) return;
     this._panelLog();
     // 결과 문장을 잠깐 보여주고 저절로 이어진다 (누르면 바로)
     const [catName] = CAT[r.cat] || CAT.nav;
-    this.card.innerHTML = `${art(r.cat)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
+    if (r.fx) this._fx(r.fx);
+    this.card.innerHTML = `${art(r.cat, this._lastEvId)}<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
     this.card.classList.remove('hidden');
     const hold = Math.min(5200, 1600 + r.text.length * 45);
     this.card.querySelector('.timer i').style.transitionDuration = `${hold}ms`;
@@ -270,7 +308,7 @@ export class TripMode {
       <div><b class="num">${s.events}</b><span>겪은 사건</span></div>
       <div><b class="num">${s.crewAlive === v.ship.crew ? (v.ship.crew === 1 ? '혼자' : `${v.ship.crew - 1}명 함께`) : `${v.ship.crew - s.crewAlive}명 잃음`}</b><span>동료</span></div>
       <div><b class="num">${s.flags.contact ? '있었어요' : '없었어요'}</b><span>설명 못 한 일</span></div>
-    </div>`;
+    </div>${s.mates.length ? `<div class="mates">${s.mates.map((m) => `<span class="${m.alive ? '' : 'gone'}">${esc(m.name)} <em>${esc(m.role)}</em></span>`).join('')}</div>` : ''}`;
     this._card(`${head}${kv}<div class="section-title" style="margin-top:18px">지나온 길</div><ul class="life">${rows}</ul>
       <div class="opts" style="margin-top:16px">${opt(0, '다시 시작', '다른 곳에서 눈을 뜬다')}</div>`, () => this._setup(true));
     this._hud();
@@ -350,7 +388,7 @@ export class TripMode {
         for (let k = 0; k < steps && !v.pending && !v.done; k++) v.step(simDt / steps, this.eventGap);
         // 새 기록은 토스트로
         const log = v.s.log;
-        if (log.length > this.shownLog) { this._toast(log[log.length - 1].cat, log[log.length - 1].text); this.shownLog = log.length; if (now - (this._panelAt || 0) > 800) { this._panelAt = now; this._panelLog(); } }
+        if (log.length > this.shownLog) { const le = log[log.length - 1]; if (le.fx) this._fx(le.fx); this._toast(le.cat, le.text); this.shownLog = log.length; if (now - (this._panelAt || 0) > 800) { this._panelAt = now; this._panelLog(); } }
         if (now - (this._hudAt || 0) > 120) { this._hudAt = now; this._hud(); }
         const ship = v.pos();
         map.setShip(v.s.f);

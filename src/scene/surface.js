@@ -67,8 +67,17 @@ export function drawSurface(canvas, place, t = 0) {
     if (P.volcano) { blob(g, W * 0.15, horizon - 10, W * 0.08, '#ffb040', 0.5); }
     if (!P.cloud) for (let i = 0; i < 70; i++) { const d = rnd(); const y = horizon + d * d * (H - horizon); const s = (1 + d * 5) * (H / 900) * (1 + rnd()); g.fillStyle = `rgba(0,0,0,${0.2 + rnd() * 0.3})`; g.beginPath(); g.ellipse(rnd() * W, y, s * 1.6, s, 0, 0, 7); g.fill(); }
     if (P.cloud) for (let i = 0; i < 18; i++) { const y = horizon + rnd() * (H - horizon); g.fillStyle = `rgba(255,255,255,${0.08 + rnd() * 0.12})`; g.beginPath(); g.ellipse(rnd() * W, y, W * (0.08 + rnd() * 0.2), (H - horizon) * 0.05, 0, 0, 7); g.fill(); }
-    // 그들의 배: 멀리, 떠오르는 중
-    theirShip(g, W * 0.78, horizon - H * (0.06 + 0.02 * Math.sin(t)), W * 0.09, t);
+    // 그들의 배: 멀리, 떠오르는 중. 아래로 빛기둥이 땅을 비추다 희미해진다
+    const sy = horizon - H * (0.06 + 0.02 * Math.sin(t)) - Math.min(H * 0.25, t * H * 0.01);
+    beam(g, W * 0.78, sy, horizon, W * 0.09, Math.max(0, 0.35 - t * 0.01));
+    theirShip(g, W * 0.78, sy, W * 0.09, t);
+    // 그들: 등성이 위에 선 그림자 셋. 눈이 희미하게 빛난다
+    aliens(g, W, horizon, H, t);
+    // 지표 현상
+    if (P.dust) dustDevil(g, W * 0.55, horizon, H, t);
+    if (P.volcano) plume(g, W * 0.15, horizon - 10, H, t, '#ffb040');
+    if (place.id === 'Enceladus' || place.id === 'Triton') plume(g, W * 0.5, horizon, H, t, '#e8f4ff');
+    if (P.cloud && Math.sin(t * 7.3) > 0.985) { g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(0, 0, W, H); }
     // 내 캡슐: 가까이, 땅 위
     myShip(g, W * 0.22, horizon + (H - horizon) * 0.35, W * 0.07, P.ground[1]);
     // 땅의 그림자 (아래쪽 어둡게)
@@ -79,6 +88,8 @@ export function drawSurface(canvas, place, t = 0) {
   } else if (kind === 'galaxy') {
     theirShip(g, W * 0.2, H * 0.72, W * 0.1, t);
   }
+  // 유성: 몇 초마다 하나
+  meteor(g, W, Math.min(H, horizon), t);
   // 비네트
   const v = g.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.9); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.6)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
 }
@@ -130,4 +141,80 @@ function galaxy(g, x, y, r, t) {
   blob(g, 0, 0, r, '#ffe9c8', 0.35);
   for (let i = 0; i < 1200; i++) { const a = rnd() * 6.28, d = Math.sqrt(rnd()) * r; const arm = Math.sin(a * 2 + d / r * 6) > 0.3 ? 1 : 0.4; g.fillStyle = `rgba(220,230,255,${(0.15 + rnd() * 0.5) * arm})`; g.beginPath(); g.arc(Math.cos(a) * d, Math.sin(a) * d, 0.6 + rnd() * 1.2, 0, 7); g.fill(); }
   g.restore();
+}
+
+// ---- 추가 요소 ----
+function beam(g, x, y, ground, w, a) {
+  if (a <= 0) return;
+  const gr = g.createLinearGradient(0, y, 0, ground); gr.addColorStop(0, `rgba(160,220,255,${a})`); gr.addColorStop(1, 'rgba(160,220,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(x - w * 0.35, y); g.lineTo(x + w * 0.35, y); g.lineTo(x + w * 1.4, ground); g.lineTo(x - w * 1.4, ground); g.closePath(); g.fill();
+  g.fillStyle = `rgba(160,220,255,${a * 0.5})`; g.beginPath(); g.ellipse(x, ground, w * 1.4, w * 0.25, 0, 0, 7); g.fill();
+}
+function aliens(g, W, horizon, H, t) {
+  const n = 3, base = W * 0.5;
+  for (let i = 0; i < n; i++) {
+    const x = base + (i - 1) * W * 0.035, h = H * (0.075 + (i % 2) * 0.012), y = horizon - h * 0.02;
+    g.fillStyle = '#05060a';
+    g.beginPath(); g.ellipse(x, y - h * 0.82, h * 0.13, h * 0.17, 0, 0, 7); g.fill();          // 큰 머리
+    g.beginPath(); g.moveTo(x - h * 0.06, y - h * 0.66); g.lineTo(x + h * 0.06, y - h * 0.66); g.lineTo(x + h * 0.09, y); g.lineTo(x - h * 0.09, y); g.closePath(); g.fill();   // 가는 몸
+    const blink = Math.sin(t * 1.3 + i * 2) > 0.92 ? 0 : 1;
+    g.fillStyle = `rgba(190,230,255,${0.55 * blink})`;
+    g.beginPath(); g.ellipse(x - h * 0.05, y - h * 0.83, h * 0.035, h * 0.02, -0.4, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(x + h * 0.05, y - h * 0.83, h * 0.035, h * 0.02, 0.4, 0, 7); g.fill();
+  }
+}
+function meteor(g, W, skyH, t) {
+  const period = 5.5, ph = (t % period) / period; if (ph > 0.12) return;
+  const k = Math.floor(t / period); const sx = ((k * 7919) % 1000) / 1000 * W, sy = ((k * 104729) % 1000) / 1000 * skyH * 0.6;
+  const len = W * 0.12, p = ph / 0.12; const x = sx + len * p, y = sy + len * 0.45 * p;
+  const gr = g.createLinearGradient(x - len * 0.5, y - len * 0.22, x, y); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, `rgba(255,255,255,${0.9 * (1 - p)})`);
+  g.strokeStyle = gr; g.lineWidth = 2; g.beginPath(); g.moveTo(x - len * 0.5, y - len * 0.22); g.lineTo(x, y); g.stroke();
+}
+function dustDevil(g, x, horizon, H, t) {
+  const h = H * 0.18, drift = Math.sin(t * 0.3) * 30;
+  g.fillStyle = 'rgba(230,190,150,.18)';
+  g.beginPath(); g.moveTo(x - 6 + drift, horizon); g.quadraticCurveTo(x + 20 + drift, horizon - h * 0.5, x + 4 + drift * 1.5, horizon - h); g.lineTo(x + 30 + drift * 1.5, horizon - h); g.quadraticCurveTo(x + 50 + drift, horizon - h * 0.5, x + 14 + drift, horizon); g.closePath(); g.fill();
+}
+function plume(g, x, y, H, t, color) {
+  for (let i = 0; i < 40; i++) { const u = (i / 40 + t * 0.08) % 1; const px = x + Math.sin(i * 1.7) * u * H * 0.06, py = y - u * H * 0.22 + u * u * H * 0.05; g.fillStyle = hexA(color, 0.5 * (1 - u)); g.beginPath(); g.arc(px, py, 1.5 + u * 2.5, 0, 7); g.fill(); }
+}
+// 프롤로그: 하늘에서 내려온 빛, 그리고 그 안에서 떠오르는 얼굴
+export function drawAbduction(canvas, t) {
+  const W = canvas.width, H = canvas.height, g = canvas.getContext('2d');
+  g.clearRect(0, 0, W, H);
+  seed = 99;
+  for (let i = 0; i < 120; i++) { g.fillStyle = `rgba(255,255,255,${0.15 + rnd() * 0.4})`; g.beginPath(); g.arc(rnd() * W, rnd() * H, rnd() * 1.2 + 0.3, 0, 7); g.fill(); }
+  const cx = W * 0.5, a = Math.min(1, t / 2.5);
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, `rgba(170,225,255,${0.32 * a})`); gr.addColorStop(1, 'rgba(170,225,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(cx - W * 0.05, 0); g.lineTo(cx + W * 0.05, 0); g.lineTo(cx + W * 0.42, H); g.lineTo(cx - W * 0.42, H); g.closePath(); g.fill();
+  for (let i = 0; i < 70; i++) { const u = (i / 70 + t * 0.05) % 1; const x = cx + (rnd() - 0.5) * W * (0.1 + 0.6 * u), y = H * (1 - u); g.fillStyle = `rgba(200,235,255,${0.5 * a * (1 - u)})`; g.beginPath(); g.arc(x, y, 1 + rnd() * 1.5, 0, 7); g.fill(); }
+  // 얼굴: 천천히 나타나고, 가끔 눈을 깜빡인다
+  const fa = Math.max(0, Math.min(0.85, (t - 3) / 4)); if (fa <= 0) return;
+  const fx = cx, fy = H * 0.17, r = Math.min(W, H) * 0.115;
+  g.globalAlpha = fa;
+  blob(g, fx, fy, r * 2.2, '#9ad0ff', 0.18);
+  g.fillStyle = '#171c25'; g.beginPath(); g.moveTo(fx, fy - r); g.bezierCurveTo(fx + r * 1.05, fy - r, fx + r * 1.0, fy + r * 0.5, fx, fy + r * 1.3); g.bezierCurveTo(fx - r * 1.0, fy + r * 0.5, fx - r * 1.05, fy - r, fx, fy - r); g.fill();
+  const blink = Math.sin(t * 0.9) > 0.985 ? 0.1 : 1;
+  for (const sgn of [-1, 1]) { g.save(); g.translate(fx + sgn * r * 0.42, fy + r * 0.05); g.rotate(sgn * 0.45); g.fillStyle = '#03040a'; g.beginPath(); g.ellipse(0, 0, r * 0.36, r * 0.17 * blink, 0, 0, 7); g.fill(); g.fillStyle = `rgba(190,230,255,${0.7 * blink})`; g.beginPath(); g.arc(-r * 0.12, -r * 0.05, r * 0.035, 0, 7); g.fill(); g.restore(); }
+  g.globalAlpha = 1;
+}
+// 항해 중 창밖 연출. true 를 돌려주는 동안 계속 그린다
+export function drawFx(canvas, name, t) {
+  const W = canvas.width, H = canvas.height, g = canvas.getContext('2d');
+  g.clearRect(0, 0, W, H);
+  const fade = (dur) => Math.max(0, Math.min(1, Math.min(t * 2, (dur - t) * 1.5)));
+  switch (name) {
+    case 'meteor': { if (t > 1.6) return false; const p = t / 1.6, x = W * (0.2 + 0.6 * p), y = H * (0.2 + 0.25 * p); const gr = g.createLinearGradient(x - W * 0.15, y - H * 0.06, x, y); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, `rgba(255,255,255,${0.95 * (1 - p)})`); g.strokeStyle = gr; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x - W * 0.15, y - H * 0.06); g.lineTo(x, y); g.stroke(); return true; }
+    case 'aurora': { if (t > 7) return false; const a = fade(7); for (let i = 0; i < 5; i++) { const gr = g.createLinearGradient(0, H * 0.1, 0, H * 0.55); gr.addColorStop(0, `rgba(120,255,170,0)`); gr.addColorStop(0.5, `rgba(120,255,170,${0.14 * a})`); gr.addColorStop(1, `rgba(170,120,255,0)`); g.fillStyle = gr; g.beginPath(); g.moveTo(0, H * 0.1); for (let x = 0; x <= W; x += W / 30) g.lineTo(x, H * (0.1 + 0.05 * Math.sin(x / W * 6 + t * 0.7 + i))); g.lineTo(W, H * 0.55); g.lineTo(0, H * 0.55); g.closePath(); g.save(); g.translate(Math.sin(t * 0.3 + i) * W * 0.05, 0); g.fill(); g.restore(); } return true; }
+    case 'flash': { if (t > 1.2) return false; g.fillStyle = `rgba(255,240,210,${0.5 * (1 - t / 1.2)})`; g.fillRect(0, 0, W, H); return true; }
+    case 'lightning': { if (t > 1) return false; if (Math.sin(t * 40) > 0.3) { g.fillStyle = `rgba(200,220,255,${0.25 * (1 - t)})`; g.fillRect(0, 0, W, H); } return true; }
+    case 'dim': { if (t > 4) return false; g.fillStyle = `rgba(0,0,0,${0.55 * fade(4)})`; g.fillRect(0, 0, W, H); return true; }
+    case 'comet': { if (t > 6) return false; const a = fade(6), x = W * (0.15 + 0.7 * t / 6), y = H * (0.3 - 0.1 * t / 6); const gr = g.createLinearGradient(x, y, x - W * 0.3, y + H * 0.08); gr.addColorStop(0, `rgba(220,240,255,${0.6 * a})`); gr.addColorStop(1, 'rgba(220,240,255,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(x, y - 4); g.lineTo(x - W * 0.3, y + H * 0.02); g.lineTo(x - W * 0.3, y + H * 0.14); g.lineTo(x, y + 4); g.closePath(); g.fill(); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); return true; }
+    case 'glow': { if (t > 5) return false; const a = fade(5); blob(g, W * 0.7, H * 0.4, H * 0.3, '#9ad0ff', 0.22 * a); return true; }
+    case 'stars': { if (t > 6) return false; const a = fade(6); seed = 5; for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(255,255,255,${a * (0.2 + rnd() * 0.7)})`; g.beginPath(); g.arc(rnd() * W, rnd() * H, rnd() * 1.3 + 0.2, 0, 7); g.fill(); } return true; }
+    case 'earth': { if (t > 8) return false; const a = fade(8), r = W * 0.6, cy = H * 1.25 - H * 0.15 * Math.min(1, t / 4); blob(g, W * 0.5, cy, r * 1.15, '#6fa8ff', 0.3 * a); g.globalAlpha = a; g.fillStyle = '#3f7fe0'; g.beginPath(); g.arc(W * 0.5, cy, r, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 6; i++) { g.beginPath(); g.ellipse(W * (0.2 + i * 0.12), cy - r * (0.7 + 0.1 * Math.sin(i)), r * 0.12, r * 0.04, 0.3, 0, 7); g.fill(); } g.globalAlpha = 1; return true; }
+    case 'eyes': { if (t > 4) return false; const a = fade(4) * (Math.sin(t * 1.1) > 0.95 ? 0.1 : 1); const x = W * 0.72, y = H * 0.42, r = W * 0.012; for (const sgn of [-1, 1]) { blob(g, x + sgn * r * 3, y, r * 4, '#bfe6ff', 0.2 * a); g.fillStyle = `rgba(200,235,255,${0.85 * a})`; g.beginPath(); g.ellipse(x + sgn * r * 3, y, r * 1.4, r * 0.7, sgn * 0.35, 0, 7); g.fill(); } return true; }
+    case 'saucer': { if (t > 7) return false; const a = fade(7), x = W * (0.25 + 0.5 * t / 7), y = H * 0.35 + Math.sin(t) * H * 0.02, w = W * 0.06; g.globalAlpha = a; blob(g, x, y + w * 0.1, w * 1.5, '#9ad0ff', 0.2); g.fillStyle = '#0b0d12'; g.beginPath(); g.ellipse(x, y, w, w * 0.22, 0, 0, 7); g.fill(); g.fillStyle = '#14171f'; g.beginPath(); g.ellipse(x, y - w * 0.12, w * 0.45, w * 0.18, 0, Math.PI, 0); g.fill(); for (let i = 0; i < 7; i++) { const an = (i / 7) * Math.PI; g.fillStyle = `rgba(160,220,255,${0.5 + 0.5 * Math.sin(t * 4 + i)})`; g.beginPath(); g.arc(x + Math.cos(an) * w * 0.8, y + w * 0.1 + Math.sin(an) * w * 0.05, w * 0.03, 0, 7); g.fill(); } g.globalAlpha = 1; return true; }
+    default: return false;
+  }
 }

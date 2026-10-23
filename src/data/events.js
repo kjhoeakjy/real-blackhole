@@ -3,12 +3,9 @@
 // cat: 아이콘·색 분류 (sun, fire, air, water, med, crew, mind, comp, rock, nav, power, body, signal, bh, earth)
 import { AU, DAY, YEAR, c } from '../physics/constants.js';
 
-const R = Math.random;
-const chance = (p) => R() < p;
-const U = (a, b) => a + R() * (b - a);
-const pick = (arr) => arr[Math.floor(R() * arr.length)];
-const hours = (s) => `${Math.round(s / 3600)}시간`;
-const fmtDelay = (s) => s < 90 ? `${Math.round(s)}초` : s < 2 * 3600 ? `${Math.round(s / 60)}분` : s < 2 * DAY ? `${(s / 3600).toPrecision(2)}시간` : s < YEAR ? `${Math.round(s / DAY)}일` : `${(s / YEAR).toPrecision(2)}년`;
+import { R, chance, U, pick, hours, fmtDelay, SF, IMAGINE, who, him } from './ev-util.js';
+import { MORE_EVENTS, SIGHTS } from './events-more.js';
+export { SIGHTS };
 
 export const EVENTS = [
   // ---------- 태양 ----------
@@ -16,7 +13,7 @@ export const EVENTS = [
     id: 'spe', cat: 'sun', title: '태양 폭풍 경보',
     desc: (v) => `태양 관측 위성이 양성자 폭풍을 알려요. 1972년 8월에 온 것과 같은 급이에요. 두꺼운 벽 뒤로 가면 안전하지만, 지금 하던 수리를 멈춰야 해요.`,
     src: 'Townsend et al. 2006 (1972년 8월 사건: 얇은 벽 뒤 1–4 Sv); NASA SRAG; 태양 주기당 1–2회',
-    when: (v) => v.rAU() < 40, rate: (v) => 0.15 * Math.min(10, 1 / Math.max(0.05, v.rAU()) ** 2),
+    when: (v) => v.rAU() < 40, rate: (v) => 0.15 * Math.min(10, 1 / Math.max(0.05, v.rAU()) ** 2) * (v.weather && v.s.tau < 60 * DAY ? v.weather.mult : 1),
     options: [
       { label: '대피실로 들어간다', hint: '물탱크나 식량 상자를 둘러 만든 좁은 방이에요. 폭풍은 하루 이틀이면 지나가요.',
         go: (v) => ({ text: `물탱크 뒤에서 ${pick(['열여덟', '스물두', '서른'])} 시간을 보냈어요. 선량계는 0.1 Sv 를 가리켜요.`, dose: 0.1, delay: 1 * DAY }) },
@@ -85,17 +82,17 @@ export const EVENTS = [
   },
   // ---------- 몸 ----------
   {
-    id: 'medical', cat: 'med', title: (v) => v._patientMe ? '배가 찢어질 듯 아파요' : '동료가 쓰러졌어요',
-    desc: (v) => { v._patientMe = v.s.crewAlive === 1 || chance(1 / v.s.crewAlive); return v._patientMe ? '오른쪽 아랫배가 눌리면 더 아파요. 열도 나요. 맹장일 수 있어요. 지구는 ' + fmtDelay(v.commDelay()) + ' 거리예요.' : '동료가 식은땀을 흘리며 배를 움켜쥐어요. 맹장일 수 있어요. 지구는 ' + fmtDelay(v.commDelay()) + ' 거리예요.'; },
+    id: 'medical', cat: 'med', title: (v) => { v._patientMe = v.s.crewAlive === 1 || chance(1 / v.s.crewAlive); if (!v._patientMe) who(v); return v._patientMe ? '배가 찢어질 듯 아파요' : `${him(v)}이 쓰러졌어요`; },
+    desc: (v) => { return v._patientMe ? '오른쪽 아랫배가 눌리면 더 아파요. 열도 나요. 맹장일 수 있어요. 지구는 ' + fmtDelay(v.commDelay()) + ' 거리예요.' : `${him(v)}(${v._m?.role || '동료'})이 식은땀을 흘리며 배를 움켜쥐어요. 맹장일 수 있어요. 지구는 ` + fmtDelay(v.commDelay()) + ' 거리예요.'; },
     src: 'NASA Integrated Medical Model: 중증 의료 사건 ≈ 0.06회/인·년 (Myers 2018); 남극 1961 로고조프 자가 맹장 수술',
     rate: (v) => 0.06 * v.s.crewAlive,
     options: [
       { label: '수술한다', hint: '1961년 남극에서 의사 로고조프는 자기 맹장을 직접 떼어냈어요. 무중력 수술은 동물 실험 단계예요.',
-        go: (v) => { const ok = chance(v.s.crewAlive > 1 ? 0.8 : 0.45); return ok ? { text: '거울과 설명서를 보며 두 시간. 끝났어요. 열은 사흘 뒤 내렸어요.', health: v._patientMe ? -0.1 : 0 } : v._patientMe ? { death: '수술 도중 출혈이 멎지 않았어요.' } : { text: '동료를 살리지 못했어요. 창밖으로 보냈어요.', crewLost: 1, morale: -0.3 }; } },
+        go: (v) => { const ok = chance(v.s.crewAlive > 1 ? 0.8 : 0.45); return ok ? { text: '거울과 설명서를 보며 두 시간. 끝났어요. 열은 사흘 뒤 내렸어요.', health: v._patientMe ? -0.1 : 0 } : v._patientMe ? { death: '수술 도중 출혈이 멎지 않았어요.' } : { text: `${him(v)}을 살리지 못했어요. 창밖으로 보냈어요.`, crewLost: 1, lost: v._m, morale: -0.3 }; } },
       { label: '항생제로 버틴다', hint: '맹장염 환자의 대부분은 항생제만으로 낫지만, 터지면 끝이에요.',
-        go: (v) => chance(0.6) ? { text: '열흘 동안 항생제를 맞았어요. 터지지 않았어요.', health: v._patientMe ? -0.05 : 0 } : v._patientMe ? { death: '맹장이 터졌어요. 항생제로는 막을 수 없었어요.' } : { text: '맹장이 터졌어요. 동료는 이틀을 버텼어요.', crewLost: 1, morale: -0.3 } },
+        go: (v) => chance(0.6) ? { text: '열흘 동안 항생제를 맞았어요. 터지지 않았어요.', health: v._patientMe ? -0.05 : 0 } : v._patientMe ? { death: '맹장이 터졌어요. 항생제로는 막을 수 없었어요.' } : { text: `맹장이 터졌어요. ${him(v)}은 이틀을 버텼어요.`, crewLost: 1, lost: v._m, morale: -0.3 } },
       { label: '지구 의사에게 묻는다', when: (v) => !v.s.flags.noantenna && !v.s.flags.silence, hint: (v) => `한마디 보내고 답을 받는 데 ${fmtDelay(2 * v.commDelay())}. 그동안은 기다려야 해요.`,
-        go: (v) => { const d = v.commDelay(); const ok = chance(d < 3600 ? 0.85 : d < DAY ? 0.65 : d < YEAR ? 0.3 : 0.1); return ok ? { text: `${fmtDelay(2 * d)} 뒤 답이 왔어요. 시키는 대로 했더니 나았어요.` } : v._patientMe ? { death: '답장은 너무 늦게 왔어요.' } : { text: '답장이 오기 전에 동료가 숨을 거뒀어요.', crewLost: 1, morale: -0.3 }; } },
+        go: (v) => { const d = v.commDelay(); const ok = chance(d < 3600 ? 0.85 : d < DAY ? 0.65 : d < YEAR ? 0.3 : 0.1); return ok ? { text: `${fmtDelay(2 * d)} 뒤 답이 왔어요. 시키는 대로 했더니 나았어요.` } : v._patientMe ? { death: '답장은 너무 늦게 왔어요.' } : { text: `답장이 오기 전에 ${him(v)}이 숨을 거뒀어요.`, crewLost: 1, lost: v._m, morale: -0.3 }; } },
     ],
   },
   {
@@ -114,7 +111,7 @@ export const EVENTS = [
   },
   // ---------- 사람 ----------
   {
-    id: 'conflict', cat: 'crew', title: '동료와 다퉜어요',
+    id: 'conflict', cat: 'crew', title: (v) => `${who(v)}과 다퉜어요`,
     desc: (v) => `${Math.round(v.s.tau / DAY)}일째. 식사 시간에 사소한 말로 시작됐어요. 좁은 곳에 오래 갇히면 넷째 분기쯤 갈등이 몰려요.`,
     src: 'Mars-500 심리 결과 (Basner et al. 2014); 남극 월동 "third-quarter phenomenon"; 스카이랩 4호 1973',
     when: (v) => v.s.crewAlive > 1 && v.s.tau > 60 * DAY, rate: (v) => 0.35,
@@ -329,7 +326,6 @@ export const MILESTONES = [
 ];
 
 // ---------- SF 영화 같은 시나리오. 실제 기록이 아니라 상상이에요 (src 에 '시나리오'라고 표시). 결과는 역시 숨겨진 확률로. ----------
-const SF = (film) => `시나리오 · 영감: ${film}`;
 export const SF_EVENTS = [
   {
     id: 'hib-offer', cat: 'sf', title: '동면 장치',
@@ -350,7 +346,7 @@ export const SF_EVENTS = [
     options: [
       { label: '캡슐을 고쳐 다시 잠든다', hint: '설명서는 "자격 있는 기술자만" 이라고 적혀 있어요.', go: (v) => chance(0.5) ? { text: '사흘 동안 설명서를 읽고 고쳤어요. 다시 안개가 올라왔어요.', hib: true, delay: 3 * DAY } : { text: '고칠 수 없었어요. 깨어서 가야 해요.', hib: false, morale: -0.2 } },
       { label: '깨어서 간다', hint: '혼자 깨어 있는 긴 시간이 시작돼요.', go: (v) => ({ text: '불을 켜고, 식당에 앉았어요. 아무도 없어요.', hib: false, morale: -0.15 }) },
-      { label: '동료 하나를 깨운다', when: (v) => v.s.crewAlive > 1, hint: '그 사람의 남은 인생을 내가 정하는 거예요.', go: (v) => chance(0.6) ? { text: '깨웠어요. 처음엔 화를 냈고, 한 달 뒤엔 같이 식탁에 앉았어요.', hib: false, morale: 0.1, flag: 'woke' } : { text: '깨웠어요. 그 사람은 그 뒤로 나와 말을 하지 않아요.', hib: false, morale: -0.2, flag: 'woke' } },
+      { label: (v) => `${v.mateName()}을 깨운다`, when: (v) => v.s.crewAlive > 1, hint: '그 사람의 남은 인생을 내가 정하는 거예요.', go: (v) => chance(0.6) ? { text: '깨웠어요. 처음엔 화를 냈고, 한 달 뒤엔 같이 식탁에 앉았어요.', hib: false, morale: 0.1, flag: 'woke' } : { text: '깨웠어요. 그 사람은 그 뒤로 나와 말을 하지 않아요.', hib: false, morale: -0.2, flag: 'woke' } },
     ],
   },
   {
@@ -398,13 +394,13 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'plague', cat: 'sf', title: '동료가 이상한 말을 해요',
-    desc: (v) => '고열, 그리고 아무도 모르는 언어 같은 중얼거림. 이틀 전 바깥 벽 작업을 하고 들어온 사람이에요.',
+    id: 'plague', cat: 'sf', title: (v) => `${who(v)}이 이상한 말을 해요`,
+    desc: (v) => `고열, 그리고 아무도 모르는 언어 같은 중얼거림. ${him(v)}은 이틀 전 바깥 벽 작업을 하고 들어온 사람이에요.`,
     src: SF('에일리언 (1979), 안드로메다 스트레인 (1971)'),
     when: (v) => v.s.crewAlive > 1, rate: (v) => 0.05,
     options: [
       { label: '격리실에 넣고 지켜본다', hint: '격리실엔 창이 하나 있어요.', go: (v) => chance(0.8) ? { text: '사흘 뒤 열이 내렸어요. 그냥 감기였어요. 중얼거림은 꿈이었대요.' } : { text: '닷새째 밤, 격리실이 조용해졌어요. 창 너머에서 그 사람은 우릴 보며 웃고 있었어요. 다음 날 멀쩡해졌어요. 다들 그 얘기는 안 해요.', morale: -0.15, flag: 'contact' } },
-      { label: '항생제와 해열제', hint: '보통 병이라면 들어요.', go: (v) => chance(0.7) ? { text: '이틀 만에 나았어요.' } : { text: '약이 듣지 않았어요. 일주일 뒤 스스로 나았지만 체중이 10 kg 빠졌어요.', crewLost: chance(0.3) ? 1 : 0, morale: -0.1 } },
+      { label: '항생제와 해열제', hint: '보통 병이라면 들어요.', go: (v) => chance(0.7) ? { text: '이틀 만에 나았어요.' } : { text: '약이 듣지 않았어요. 일주일 뒤 스스로 나았지만 체중이 10 kg 빠졌어요.', crewLost: chance(0.3) ? 1 : 0, lost: v._m, morale: -0.1 } },
       { label: '배 전체를 소독하고 바깥 작업을 금지한다', hint: '하루를 통째로 써요.', go: (v) => ({ text: '하루 종일 소독했어요. 환자는 나았고, 벽 밖엔 다시 아무도 안 나가요.', delay: DAY, morale: -0.05 }) },
     ],
   },
@@ -430,7 +426,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'mutiny', cat: 'crew', title: '동료가 배를 돌리자고 해요',
+    id: 'mutiny', cat: 'crew', title: (v) => `${who(v)}이 배를 돌리자고 해요`,
     desc: (v) => '"여기서 돌아가는 게 더 빨라." 사실이 아니에요. 하지만 둘이 그 말을 믿어요. 조종실 문 앞에 서 있어요.',
     src: SF('선샤인 (2007), 판도럼') + ' · Mars-500 갈등 보고',
     when: (v) => v.s.crewAlive >= 3 && v.s.morale < 0.45, rate: (v) => 0.5,
@@ -466,7 +462,7 @@ export const SF_EVENTS = [
     when: (v) => v.s.tau > 180 * DAY, rate: (v) => 0.1 * (1.5 - v.s.morale),
     options: [
       { label: '눈을 감고 열까지 센다', hint: '열에 사라지면 환각이에요.', go: (v) => chance(0.9) ? { text: '아홉에 사라졌어요. 그날은 일찍 잤어요.', morale: -0.05, health: -0.03 } : { text: '열까지 세도 있었어요. 동료를 불렀어요. 동료도 봤어요. 다음 날 아침엔 없었어요.', morale: -0.1, flag: 'contact' } },
-      { label: '동료에게 확인한다', when: (v) => v.s.crewAlive > 1, hint: '둘이 보면 환각이 아니에요. 아마도.', go: (v) => chance(0.95) ? { text: '"아무것도 없는데?" 의무실에서 수면제를 받았어요.', morale: -0.05 } : { text: '동료도 봤어요. 10분 뒤 사라졌어요. 둘 다 기록하지 않기로 했어요.', flag: 'contact' } },
+      { label: (v) => `${v.mateName()}에게 확인한다`, when: (v) => v.s.crewAlive > 1, hint: '둘이 보면 환각이 아니에요. 아마도.', go: (v) => chance(0.95) ? { text: '"아무것도 없는데?" 의무실에서 수면제를 받았어요.', morale: -0.05 } : { text: '동료도 봤어요. 10분 뒤 사라졌어요. 둘 다 기록하지 않기로 했어요.', flag: 'contact' } },
       { label: '그쪽으로 배를 돌린다', hint: '진짜라면 집이에요.', go: (v) => ({ text: '돌렸어요. 공은 그대로 창 한가운데 있다가 사라졌어요. 항로를 되돌리는 데 열흘이 걸렸어요.', delayFrac: 0.03, fuel: -0.08, morale: -0.15, navRisk: 0.1 }) },
     ],
   },
@@ -604,9 +600,9 @@ export const SF_EVENTS = [
     trigger: (v) => v.s.age >= 70 && !v.s.flags.oldage, once: 'oldage',
     options: [
       { label: '컴퓨터에 정비를 더 맡긴다', hint: '', go: (v) => ({ text: '점검 목록을 컴퓨터에 넘겼어요. 가끔 틀려요.', navRisk: 0.1 }) },
-      { label: '동료에게 넘긴다', when: (v) => v.s.crewAlive > 1, hint: '', go: (v) => ({ text: '젊은 손이 나사를 받았어요. 나는 창가에 앉아요.', morale: 0.05 }) },
+      { label: (v) => `${v.mateName()}에게 넘긴다`, when: (v) => v.s.crewAlive > 1, hint: '', go: (v) => ({ text: '젊은 손이 나사를 받았어요. 나는 창가에 앉아요.', morale: 0.05 }) },
       { label: '그래도 내가 한다', hint: '', go: (v) => chance(0.7) ? { text: '느리지만 해요. 나사는 두 개 잃었어요.' } : { text: '나사를 놓쳐 환풍기에 들어갔어요. 하루를 잃었어요.', delay: DAY, health: -0.03 } },
     ],
   },
 ];
-EVENTS.push(...SF_EVENTS);
+EVENTS.push(...SF_EVENTS, ...MORE_EVENTS);

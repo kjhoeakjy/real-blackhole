@@ -2,7 +2,7 @@
 // 모든 비율은 측정값(각 줄의 출처)이고, 죽음은 매 걸음마다 그 확률대로 굴린다.
 import { c, AU, DAY, YEAR, LY } from '../physics/constants.js';
 import { DOSE_RATE_SV_PER_YEAR, FATAL_RISK_PER_SV, HUMAN_K, blackHoleSurvival } from '../physics/trip.js';
-import { EVENTS, MILESTONES } from '../data/events.js';
+import { EVENTS, MILESTONES, SIGHTS } from '../data/events.js';
 
 const GOMPERTZ_A = 2.5e-5, GOMPERTZ_B = 0.095;  // 사망률 λ(x)=a·e^{bx}, 기대수명 ≈ 81세
 const FOOD_KG_DAY = 1.83;                         // NASA HIDH, 포장 포함
@@ -12,6 +12,9 @@ const R = Math.random;
 // 동면 중에는 컴퓨터가 비상시에만 깨운다: 이 사건들만 온다
 const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
+// 동료 후보: 이름·역할. 배에 오를 때 정원-1 명을 뽑는다
+const MATES = [['서하린', '의사'], ['강민준', '기관사'], ['오지우', '항법사'], ['레나 오카포', '식물학자'], ['토마스 레예스', '통신사'], ['박도윤', '조종사'], ['아이샤 라만', '물리학자'], ['이수아', '정비사'], ['사토 유키', '심리상담사'], ['정하람', '요리사'], ['마테오 비앙키', '지질학자'], ['한세영', '간호사'], ['니콜라 페트로프', '전기기사'], ['최은우', '생물학자'], ['마리암 하다드', '천문학자']];
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 export class Voyage {
   // from: 출발지, A/B: 출발·지구 위치(m, 태양 중심), ship: SHIPS 항목, age: 출발 나이, bh: {massSolar, chi, rOverRg} | null
@@ -27,10 +30,12 @@ export class Voyage {
       power: 1, hull: 1, health: 1, morale: 1, fuel: 1, navRisk: 0, vFactor: 1,
       alive: true, arrived: false, death: null, log: [], flags: {}, cancerAt: null, deathAt: null,
       hib: false, hibHalf: false, nextCourse: 0.35, lowPowerDays: 0, starveDays: 0, thirstDays: 0, chokeDays: 0, lastEventTau: -Infinity, events: 0,
+      mates: shuffle(MATES.slice()).slice(0, Math.max(0, ship.crew - 1)).map(([name, role]) => ({ name, role, alive: true, bond: 0 })),
     };
+    this.weather = null;   // 실제 우주 날씨 (UI 가 넣어 준다): {kp, xray, cls}
     this.pending = null;
     this.prevR = startAU;
-    this.s.log.push({ tau: 0, cat: 'nav', text: `${from.name}에서 출발. ${ship.name}, ${ship.crew === 1 ? '혼자' : `${ship.crew - 1}명과 함께`}.` });
+    this.s.log.push({ tau: 0, cat: 'nav', text: `${from.name}에서 출발. ${ship.name}, ${ship.crew === 1 ? '혼자' : `${this.s.mates.map((m) => `${m.name}(${m.role})`).join(', ')}와 함께`}.` });
     // 블랙홀 곁 출발: 조석력은 출발 순간에 결정된다
     if (bh) {
       const res = blackHoleSurvival(bh.massSolar, bh.chi, bh.rOverRg);
@@ -48,6 +53,18 @@ export class Voyage {
   remaining() { return this.distM * (1 - this.s.f) / (this.v * this.gamma); } // 배 시계로 남은 시간(s)
   tEarth() { return this.s.tau * this.gamma; }
   get done() { return !this.s.alive || this.s.arrived; }
+  // 동료: 살아 있는 사람 중 하나 (없으면 null). 사건 글에 이름을 쓰기 위해
+  alive() { return this.s.mates.filter((m) => m.alive); }
+  mate() { const a = this.alive(); return a.length ? a[Math.floor(R() * a.length)] : null; }
+  mateName() { const m = this.mate(); return m ? m.name : '동료'; }
+  // 동료를 잃는다: 지정한 사람 또는 무작위. 이름을 돌려준다
+  loseMate(n = 1, who = null) {
+    const lost = [];
+    for (let k = 0; k < n; k++) { const m = who && who.alive ? who : this.mate(); if (!m) break; m.alive = false; m.diedTau = this.s.tau; lost.push(m.name); who = null; }
+    this.s.crewAlive = 1 + this.alive().length;
+    return lost;
+  }
+  addMate(name, role) { this.s.mates.push({ name, role, alive: true, bond: 0, joinedTau: this.s.tau }); this.s.crewAlive = 1 + this.alive().length; }
 
   // dt: 배 시계로 흐르는 시간(s). cooldown: 사건 사이 최소 간격(s, 연출용)
   step(dt, cooldown = 0) {
@@ -89,7 +106,9 @@ export class Voyage {
     const ageInt = Math.floor(s.age);
     if (ageInt > Math.floor(this.age0) && ageInt !== s.flags.lastBirthday) { s.flags.lastBirthday = ageInt; this._log('body', `${ageInt}세. ${s.hib ? '동면 중이에요. ' : ''}지구 날짜로 ${this.earthDate()}.`); }
     // 기록만 남는 순간
-    for (const m of MILESTONES) if (m.when(this)) { if (m.flag) s.flags[m.flag] = true; this._log(m.cat, m.text(this)); }
+    for (const m of MILESTONES) if (m.when(this)) { if (m.flag) s.flags[m.flag] = true; this._log(m.cat, m.text(this), m.fx || null); }
+    // 눈에 보이는 순간 (유성·오로라·플레어…): 선택은 없고 창밖 연출과 기록만
+    if (!s.hib && s.tau - (s.lastSightTau || 0) > 20 * DAY) for (const m of SIGHTS) { if (m.when && !m.when(this)) continue; if (R() < m.rate(this) * dy) { s.lastSightTau = s.tau; this._log(m.cat, typeof m.text === 'function' ? m.text(this) : m.text, m.fx); if (m.morale) s.morale = clamp(s.morale + m.morale, 0, 1); break; } }
     this.prevR = r;
     // 사건: 조건 사건(한 번)과 무작위 사건(푸아송). 연출을 위해 사건 사이 간격을 둔다
     const rateMul = (1 + (1 - s.morale) * 0.6) * (s.hib ? 0.35 : 1);   // 사기가 낮으면 실수가 는다, 동면 중엔 조용하다
@@ -108,7 +127,7 @@ export class Voyage {
     const title = typeof e.title === 'function' ? e.title(this) : e.title;
     const woke = this.s.hib && e.id !== 'hib-fault';
     const desc = (woke ? '캡슐이 나를 깨웠어요. 몸이 덜 풀린 채로 경고등을 봐요. ' : '') + e.desc(this);
-    this.pending = { ev: e, woke, title: typeof e.title === 'function' ? e.title(this) : title, desc, options: opts.map((o) => ({ ...o, hint: typeof o.hint === 'function' ? o.hint(this) : o.hint })) };
+    this.pending = { ev: e, woke, title: typeof e.title === 'function' ? e.title(this) : title, desc, options: opts.map((o) => ({ ...o, label: typeof o.label === 'function' ? o.label(this) : o.label, hint: typeof o.hint === 'function' ? o.hint(this) : o.hint })) };
     this.s.lastEventTau = this.s.tau; this.s.events++;
   }
   // 선택: 결과를 굴리고 효과를 적용한다
@@ -120,7 +139,7 @@ export class Voyage {
     if (r.retry) { this._log(p.ev.cat, r.text); this.s.flags[p.ev.once] = false; return { text: r.text }; }
     this.apply(r);
     const back = p.woke && this.s.hib && !r.death && !r.arrived ? ' 다시 캡슐에 들어갔어요.' : '';
-    const entry = { cat: p.ev.cat, title: p.title, choice: o.label, text: (r.death || r.text) + back };
+    const entry = { cat: p.ev.cat, title: p.title, choice: o.label, text: (r.death || r.text) + back, fx: r.fx || null };
     this._log(p.ev.cat, `${p.title} — ${o.label}. ${r.death || r.text}${back}`);
     if (r.death) this._die(r.death, true);
     if (r.arrived) this.s.arrived = true;
@@ -143,15 +162,18 @@ export class Voyage {
     if (r.eco != null) s.eco = r.eco;
     if (r.navRisk) s.navRisk += r.navRisk;
     if (r.vFactor) s.vFactor *= r.vFactor;
-    if (r.crewLost) s.crewAlive = Math.max(1, s.crewAlive - r.crewLost);
-    if (r.crewGain) s.crewAlive += r.crewGain;
+    if (r.crewLost) { const names = this.loseMate(r.crewLost, r.lost || null); if (names.length && !r.text?.includes(names[0])) this._log('crew', `${names.join(', ')}을(를) 잃었어요.`); }
+    if (r.crewGain) { if (r.newMate) this.addMate(r.newMate.name, r.newMate.role); else s.crewAlive += r.crewGain; }
+    if (r.bond) for (const m of this.alive()) m.bond += r.bond;
+    if (r.jump) s.f = Math.min(1, s.f + (1 - s.f) * r.jump);   // 남은 거리의 일부를 한 번에 (시나리오)
     if (r.hib != null) { s.hib = r.hib; if (r.hib) s.hibHalf = false; }
     if (r.hibHalf) { s.hibHalf = true; s.hib = false; }
     if (r.flag) s.flags[r.flag] = true;
+    if (r.flag2) s.flags[r.flag2] = true;
     const extra = (r.delay || 0) + (r.delayFrac ? r.delayFrac * this.remaining() : 0);   // 멈춰 있던 시간·돌아가는 길 (배 시계)
     if (extra) { s.tau += extra; s.aged = (s.aged || 0) + extra; s.age = this.age0 + s.aged / YEAR; }
   }
-  _log(cat, text) { this.s.log.push({ tau: this.s.tau, cat, text }); }
+  _log(cat, text, fx = null) { const e = { tau: this.s.tau, cat, text }; if (fx) e.fx = fx; this.s.log.push(e); }
   _die(text, logged = false) { const s = this.s; s.alive = false; s.death = { text, age: s.age, tau: s.tau, f: s.f }; if (!logged) this._log('end', text); }
   earthDate() { const d = new Date(Date.now() + this.tEarth() * 1e3); return isFinite(d) && this.tEarth() / YEAR < 7000 ? d.toISOString().slice(0, 10) : `${Math.round(this.tEarth() / YEAR).toLocaleString('en-US')}년 뒤`; }
 }
