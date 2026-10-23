@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>map test</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}#lbl span{position:absolute;color:#cdd;font:12px sans-serif;transform:translate(-50%,-140%)}</style>
+<script type="importmap">{"imports":{"three":"../vendor/three.module.min.js"}}</script>
+</head><body>
+<canvas id="c" width="960" height="540"></canvas><div id="lbl"></div>
+<script src="../vendor/astronomy.browser.min.js"></script>
+<script type="module">
+import { UniverseMap } from '../src/scene/map.js';
+import { loadCatalog } from '../src/data/catalog.js';
+const q = new URLSearchParams(location.search);
+try {
+  const cat = await loadCatalog('../data/blackholes.json');
+  const m = new UniverseMap(document.getElementById('c'), cat);
+  m.resize(960, 540);
+  m.updatePlanets(new Date());
+  m.logDist = m.targetLogDist = +(q.get('log') ?? 12.2);
+  let t = 0;
+  const loop = () => { m.render(1 / 60); if (++t < 20) requestAnimationFrame(loop); else {
+    const L = m.projectLabels(); const el = document.getElementById('lbl');
+    el.innerHTML = L.map((l) => `<span style="left:${l.x}px;top:${l.y}px;opacity:${l.alpha}">${l.text}</span>`).join('');
+    window.__labels = L.map((l) => l.text); window.__done = true; } };
+  loop();
+} catch (e) { console.error('ERR', e.message, e.stack); window.__done = true; }
+</script></body></html>

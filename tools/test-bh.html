@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><title>bh test</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body>
+<canvas id="c" width="960" height="540"></canvas>
+<script type="module">
+import { BHRenderer, buildSkyCanvas, axisInfallU } from '../src/scene/bh-renderer.js';
+const q = new URLSearchParams(location.search);
+const stars = new Float32Array(await (await fetch('../data/stars8.bin')).arrayBuffer());
+const mw = await (await fetch('../data/mw.json')).json();
+const R = new BHRenderer(document.getElementById('c'));
+R.setSky(buildSkyCanvas(stars, mw, 2048, 1024));
+const s = R.state;
+s.a = +(q.get('a') ?? 0.9);
+s.disk.rin = +(q.get('rin') ?? 3); s.disk.rout = +(q.get('rout') ?? 18);
+s.disk.gain = +(q.get('gain') ?? 1.0); s.disk.Tstar = 6500; s.disk.turb = +(q.get('turb') ?? 0.7);
+s.disk.on = q.get('disk') !== '0';
+s.skyGain = +(q.get('sky') ?? 1); s.debug = q.get('debug') === '1';
+s.maxSteps = +(q.get('steps') ?? 600); s.quality = +(q.get('q') ?? 1);
+const dist = +(q.get('d') ?? 30), inc = (+(q.get('inc') ?? 80)) * Math.PI / 180;
+if (q.get('fall')) {
+  const r = +q.get('fall'); const E = Math.sqrt(1 - 2*200/(200*200+s.a*s.a));
+  const u = axisInfallU(r, E, s.a);
+  R.lookAt([0,0,r], [0,0,0], [0,1,0], u); s.fov = 90;
+} else {
+  R.lookAt([dist*Math.sin(inc), 0, dist*Math.cos(inc)], [0,0,0], [0,0,1]);
+  s.fov = +(q.get('fov') ?? 40);
+}
+if (q.get('obj')) { s.obj.on = true; s.obj.pos=[0,0,+q.get('obj')]; s.obj.axes=[0.6,1.2]; s.obj.color=[0.9,0.8,0.6]; s.obj.u=axisInfallU(+q.get('obj'), 0.99, s.a); }
+const t0 = performance.now();
+R.render(); R.gl.finish();
+window.__ms = performance.now() - t0; window.__done = true;
+</script></body></html>
