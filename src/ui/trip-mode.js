@@ -112,7 +112,7 @@ export class TripMode {
     b.innerHTML = '';
     const n = this.starts().length;
     this.root = el(`<div>
-      <div class="section"><div class="eyebrow">지금 이 순간의 우주</div><div class="title-lg">지구로 돌아가기</div>
+      <div class="section"><div class="eyebrow">지금 이 순간의 우주</div><div class="title-lg">외계인에게 납치됐다</div>
         <p class="note" style="margin-top:6px">납치된 뒤 우주 어딘가에서 눈을 뜬다. 어디인지는 고를 수 없다. 배에 오르면 시간이 흐르고 나이가 들고 사건이 끼어든다. 그때마다 고른다. 거리·속도·위험은 전부 실제 측정값.</p></div>
       <div class="section">
         <div class="row"><button class="btn primary block" id="t-go">처음부터</button></div>
