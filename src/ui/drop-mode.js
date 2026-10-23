@@ -220,7 +220,7 @@ export class DropMode {
           <div class="stat"><div class="l">내 추측</div><div class="v num">${esc(g.text)}</div></div>
           <div class="stat"><div class="l">지평선</div><div class="v">${outsideTruth ? '밖에서 찢어짐' : '안에서'} ${g.outside === outsideTruth ? '<span class="tag">맞음</span>' : '<span class="tag warn">틀림</span>'}</div></div>
         </div>
-        <p class="note" style="margin-top:10px">${esc(answerLabel)}${afterHorizon != null ? ` — 지평선을 넘고 ${fmtTime(afterHorizon)} 뒤.` : ''} 지평선 통과까지 ${fmtTime(sc.horizon.tau)}, ${sc.chi > 0 ? `내부 지평선까지 ${fmtTime(sc.inner.tau)}` : `특이점까지 ${fmtTime(sc.end.tau)}`}.</p>
+        <p class="note" style="margin-top:10px">${esc(answerLabel)}${afterHorizon != null ? ` — 지평선을 넘고 ${fmtTime(afterHorizon)} 뒤.` : main && !main.unreachable ? ` — 지평선 ${fmtTime(sc.horizon.tau - main.tau)} 전.` : '.'} 놓은 뒤 지평선 통과까지 ${fmtTime(sc.horizon.tau)}, 그 뒤 ${sc.chi > 0 ? `${fmtTime(sc.inner.tau - sc.horizon.tau)} 만에 내부 지평선` : `${fmtTime(sc.end.tau - sc.horizon.tau)} 만에 특이점`}.</p>
         ${sc.mergerRegime ? `<p class="note tiny"><span class="tag warn">주의</span> 질량비 ${fmtSci(sc.massRatio, 2)} 로 블랙홀이 물체보다 충분히 무겁지 않아요. 깨끗한 조석 파괴보다는 병합에 가까워요.</p>` : ''}
         ${main?.unreachable ? `<p class="note tiny">자전축 위 커 블랙홀에서는 조석장이 유한해요 (최댓값은 r ≈ √3·a 근처). 이 물체는 내부 지평선까지 조석으로는 찢어지지 않고, 거기서 청색편이된 복사에 파괴될 것으로 봐요 (모형 의존).</p>` : ''}
       </div>

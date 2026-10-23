@@ -5,6 +5,16 @@ import { horizons, isco, photonOrbit, hawkingTemperature, shadowAngularSizeMicro
 import { bandName } from '../physics/disk.js';
 import { fmtSci, fmtSolar, fmtPc, fmtLy, fmtAngle, fmtErr, fmtTemp, fmtKm, fmtTime, esc, el } from './format.js';
 
+function compText(c) {
+  if (typeof c === 'string') return c;
+  const parts = [];
+  if (c.spectral_type) parts.push(c.spectral_type);
+  if (c.mass != null) parts.push(`${c.mass} M☉`);
+  if (c.period_days != null) parts.push(c.period_days > 400 ? `주기 ${(c.period_days / 365.25).toPrecision(3)} 년` : c.period_days < 1 ? `주기 ${(c.period_days * 24).toPrecision(3)} 시간` : `주기 ${c.period_days} 일`);
+  if (c.eccentricity != null) parts.push(`e = ${c.eccentricity}`);
+  return `${c.name || ''}: ${parts.join(' · ')}`;
+}
+
 export class ViewMode {
   constructor(ctx) { this.ctx = ctx; this.bh = null; this.diskOn = true; }
   enter(arg) {
@@ -75,7 +85,7 @@ export class ViewMode {
           ${bh.raStr ? `<div class="k">위치 (J2000)</div><div class="v num small">${esc(bh.raStr)} ${esc(bh.decStr)}</div>` : ''}
           ${bh.state ? `<div class="k">강착 상태</div><div class="v small">${esc(bh.state)}</div>` : ''}
           ${bh.eddington != null ? `<div class="k">L / L_Edd</div><div class="v num">${fmtSci(bh.eddington, 2)}</div>` : ''}
-          ${bh.companion ? `<div class="k">동반성</div><div class="v small">${esc(bh.companion)}</div>` : ''}
+          ${bh.companion ? `<div class="k">동반성</div><div class="v small">${esc(compText(bh.companion))}</div>` : ''}
           ${bh.discovery ? `<div class="k">발견</div><div class="v num">${bh.discovery}</div>` : ''}
         </div>
         ${bh.massNote ? `<p class="note tiny">${esc(bh.massNote)}</p>` : ''}

@@ -63,7 +63,8 @@ export class BHView {
     s.disk.rin = rIsco;
     s.disk.rout = Math.max(14, rIsco * 4.5);
     s.disk.Tstar = dt ? clamp(dt.Tstar, 1200, 40000) : 6500;
-    s.disk.gain = desc.disk === 'faint' ? 0.3 : desc.disk === 'riaf' ? 0.45 : 0.6;
+    // 노비코프–손 원반은 T ∝ r^-3/4 라 ISCO 근처 고리만 밝다. 정면에서도 바깥 원반이 보이도록 노출을 올린다 (안쪽은 ACES 로 부드럽게 포화)
+    s.disk.gain = desc.disk === 'faint' ? 1.0 : desc.disk === 'riaf' ? 1.6 : 2.2;
     s.disk.turb = 0.75;
     s.skyGain = 1;
     s.obj.on = false;
