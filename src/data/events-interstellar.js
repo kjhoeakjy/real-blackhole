@@ -9,7 +9,7 @@ const yrs = (y) => `${Math.round(y)}년`;
 
 export const INTERSTELLAR_EVENTS = [
   {
-    id: 'wormhole', cat: 'bh', title: '별들이 공처럼 비쳐요', fx: 'warp',
+    id: 'wormhole', cat: 'bh', title: '항로 앞에 웜홀이 있어요', fx: 'warp',
     desc: (v) => '항로 앞에 완벽한 구 하나. 안에 반대쪽 하늘이 둥글게 비쳐요. 레이더엔 지름 10 km. 누가 두고 간 것처럼 정확히 항로 위에 있어요.',
     src: SF('인터스텔라 (2014)') + ' · 웜홀은 이론(Morris–Thorne 1988)일 뿐 관측된 적 없어요',
     when: (v) => far(v) && v.s.f > 0.1 && v.s.f < 0.9 && !v.s.flags.wormhole, rate: (v) => 0.25,
@@ -20,7 +20,7 @@ export const INTERSTELLAR_EVENTS = [
     ],
   },
   {
-    id: 'miller', cat: 'bh', title: '물의 행성', fx: 'dim',
+    id: 'miller', cat: 'bh', title: '블랙홀 곁의 물 행성', fx: 'dim',
     desc: (v) => '거대 블랙홀 곁을 도는 행성. 얕은 바다가 끝없이 펼쳐지고 물이 있어요. 블랙홀 중력 때문에 이 행성의 한 시간은 바깥의 7년이에요.',
     src: SF('인터스텔라 (2014)') + ' · 중력 시간 지연은 실제(GPS 보정), 이 정도 비율은 블랙홀 바로 곁에서만',
     when: (v) => far(v) && v.s.water < 200 && !v.s.flags.miller, rate: (v) => 0.15,
@@ -42,7 +42,7 @@ export const INTERSTELLAR_EVENTS = [
     ],
   },
   {
-    id: 'tesseract', cat: 'sf', title: '책장 뒤에서 누가 두드려요', fx: 'eyes',
+    id: 'tesseract', cat: 'sf', title: '벽 뒤에서 모스 부호가 들려요', fx: 'eyes',
     desc: (v) => '침실 벽에서 규칙적인 소리. 길고 짧은 두드림. 모스 부호예요. 좌표 숫자가 반복돼요. 우리 항로에서 아주 조금 벗어난 곳.',
     src: SF('인터스텔라 (2014)'),
     when: (v) => v.s.flags.gargantua || v.s.flags.wormhole || v.s.flags.contact, rate: (v) => 0.1, once: 'tesseract', trigger: (v) => (v.s.flags.gargantua || v.s.flags.wormhole) && chance(0.004),
@@ -64,7 +64,7 @@ export const INTERSTELLAR_EVENTS = [
     ],
   },
   {
-    id: 'future-self', cat: 'signal', title: '미래에서 온 교신', fx: 'glow',
+    id: 'future-self', cat: 'signal', title: '미래의 내가 교신을 보냈어요', fx: 'glow',
     desc: (v) => `우리 호출 부호로 교신이 와요. 목소리는 내 것인데 늙었어요. "${pick(['다음 달 셋째 주, 배전반을 열지 마.', '물탱크 2번을 믿지 마.', '그 캡슐은 열지 마.', '지구에 도착하면 바로 북쪽으로 가.'])}" 그리고 잡음.`,
     src: IMAGINE + ' · 영감: 인터스텔라, 컨택트',
     when: (v) => v.s.tau > 60 * DAY && !v.s.flags.future, rate: (v) => 0.12,
@@ -80,7 +80,7 @@ export const INTERSTELLAR_EVENTS = [
     src: SF('인터스텔라 (2014)'),
     when: (v) => far(v) && v.ship.crew > 1 && !v.s.flags.mann, rate: (v) => 0.12,
     options: [
-      { label: '배에 태운다', hint: '사람이 하나 늘어요. 오래 혼자였던 사람은 가끔 달라져 있어요.', go: (v) => chance(0.6) ? { text: '이름은 만. 지질학자예요. 식탁에서 잘 웃어요. 밤에 가끔 복도에 서 있어요.', crewGain: 1, newMate: { name: '만', role: '지질학자' }, morale: 0.05, flag: 'mann', flag2: 'mannOn' } : { text: '한 달 뒤 그 사람이 착륙선을 훔쳐 떠나려 했어요. 도킹부가 찢기고 연료가 샜어요. 그 사람은 돌아오지 않았어요.', hull: -0.2, fuel: -0.25, morale: -0.2, flag: 'mann', delay: 10 * DAY } },
+      { label: '배에 태운다', hint: '사람이 하나 늘어요. 오래 혼자였던 사람은 가끔 달라져 있어요.', go: (v) => chance(0.6) ? { text: '지질학자예요. 식탁에서는 말이 많고, 밤에 가끔 복도에 혼자 서 있어요.', crewGain: 1, newMate: { name: '만', role: '지질학자' }, morale: 0.05, flag: 'mann', flag2: 'mannOn' } : { text: '한 달 뒤 그 사람이 착륙선을 훔쳐 떠나려 했어요. 도킹부가 찢기고 연료가 샜어요. 그 사람은 돌아오지 않았어요.', hull: -0.2, fuel: -0.25, morale: -0.2, flag: 'mann', delay: 10 * DAY } },
       { label: '식량만 나눠 주고 떠난다', hint: '', go: (v) => ({ text: '석 달치 식량을 내리고 좌표를 지구에 보냈어요. 그 사람은 창 앞에 서서 우리가 안 보일 때까지 있었어요.', food: -90, morale: -0.05, flag: 'mann' }) },
       { label: '깨우지 않고 지나간다', hint: '', go: (v) => ({ text: '신호는 계속 나왔어요. 사흘 동안.', morale: -0.1, flag: 'mann' }) },
     ],
@@ -96,7 +96,7 @@ export const INTERSTELLAR_EVENTS = [
     ],
   },
   {
-    id: 'ghost-ship', cat: 'sf', title: '우리 배가 앞에 있어요', fx: 'eyes',
+    id: 'ghost-ship', cat: 'sf', title: '미래의 우리 배가 앞에 있어요', fx: 'eyes',
     desc: (v) => '레이더에 우리와 똑같은 배. 같은 호출 부호, 같은 흠집. 창 안에 사람들이 보여요. 우리예요. 늙은 우리.',
     src: IMAGINE + ' · 영감: 인터스텔라, 코히어런스',
     when: (v) => (v.s.flags.wormhole || v.s.flags.gargantua || v.s.flags.loop) && !v.s.flags.ghost, rate: (v) => 0.4,

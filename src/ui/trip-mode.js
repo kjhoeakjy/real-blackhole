@@ -290,7 +290,7 @@ export class TripMode {
     this.card.dataset.cat = p.ev.cat; this.card.dataset.ev = p.ev.id;
     this.cockpit.classList.toggle('alert', ALERT.has(p.ev.cat));
     const m = v._m && v._m.alive && ['crew', 'mind', 'med', 'rock', 'sf'].includes(p.ev.cat) && (p.title.includes(v._m.name) || p.desc.includes(v._m.name)) ? v._m : null;
-    const who = m ? `<div class="who"><i style="--h:${hue(m.name)}">${esc(m.name[0])}</i><span>${esc(m.name)}<em>${esc(m.role)}</em></span></div>` : '';
+    const who = m ? `<div class="who"><i style="--h:${hue(m.name)}">${esc(m.name.replace(/\D/g, '') || m.name[0])}</i><span>${esc(m.name)}<em>${esc(m.role)}</em></span></div>` : '';
     const html = `${art(p.ev.cat, p.ev.id)}<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div>${who}<div class="d">${esc(p.desc)}</div>
       <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
     this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });

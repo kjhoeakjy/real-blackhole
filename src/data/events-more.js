@@ -24,7 +24,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'mate-stash', cat: 'crew', title: '창고 수량이 안 맞아요',
+    id: 'mate-stash', cat: 'crew', title: '누가 식량을 숨겼어요',
     desc: (v) => `식량 상자 열한 개가 비었어요. 장부엔 여덟 개. ${who(v)}의 침낭 밑에서 포장지가 나왔어요.`,
     src: 'Mars-500 식량 분배 갈등 보고; 남극 월동 기지 식량 사고 사례',
     when: (v) => many(v) && v.s.tau > 90 * DAY, rate: (v) => 0.2,
@@ -35,7 +35,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'mate-eva', cat: 'rock', title: '안테나 받침이 흔들려요',
+    id: 'mate-eva', cat: 'rock', title: '밖에 나가 안테나를 고쳐야 해요',
     desc: (v) => `밖에 나가 볼트 네 개를 조여야 해요. ${who(v)}이 같이 가겠다고 해요. 1965년 레오노프는 우주복이 부풀어 에어록에 못 들어왔고, 2013년 파르미타노는 헬멧에 물이 찼어요.`,
     src: 'Voskhod 2 (1965) Leonov EVA; ISS EVA-23 (2013) Parmitano 헬멧 누수; NASA EVA 위험 ≈ 1/400 회',
     when: many, rate: (v) => 0.25,
@@ -60,10 +60,10 @@ export const MORE_EVENTS = [
     id: 'mate-chess', cat: 'crew', title: (v) => `${who(v)}이 체스판을 만들었어요`,
     desc: (v) => '포장 상자를 잘라 말을 깎고, 자석 테이프로 판을 만들었어요. 1970년 소유즈 9호 승무원은 지상 관제와 체스를 뒀어요.',
     src: 'Soyuz 9 (1970) 우주–지상 체스; ISS 여가 활동 기록',
-    when: many, rate: (v) => 0.2, once: 'chess', trigger: (v) => many(v) && v.s.tau > 45 * DAY && chance(0.004),
+    when: (v) => many(v) && !v.s.flags.chess, rate: (v) => 0.25,
     options: [
-      { label: '매일 저녁 한 판', hint: '시간은 많아요.', go: (v) => ({ text: `${Math.round(U(1, 3))}년에 걸친 대회가 시작됐어요. 승률표가 벽에 붙었어요.`, morale: 0.15, bond: 1 }) },
-      { label: '구경만 한다', hint: '', go: (v) => ({ text: '두 사람이 두고 나머지가 훈수를 둬요. 저녁이 길어졌어요.', morale: 0.05 }) },
+      { label: '매일 저녁 한 판', hint: '시간은 많아요.', go: (v) => ({ text: `${Math.round(U(1, 3))}년에 걸친 대회가 시작됐어요. 승률표가 벽에 붙었어요.`, morale: 0.15, bond: 1, flag: 'chess' }) },
+      { label: '구경만 한다', hint: '', go: (v) => ({ text: '두 사람이 두고 나머지가 훈수를 둬요. 저녁이 길어졌어요.', morale: 0.05, flag: 'chess' }) },
     ],
   },
   {
@@ -100,10 +100,10 @@ export const MORE_EVENTS = [
     id: 'mate-show', cat: 'crew', title: (v) => `${who(v)}의 저녁 방송`,
     desc: (v) => `${him(v)}이 매일 저녁 선내 방송으로 "뉴스"를 읽어요. 오늘의 거리, 오늘의 고장, 오늘의 농담. 청취자 ${v.s.crewAlive - 1}명.`,
     src: 'ISS 승무원 여가 기록; 남극 기지 자체 라디오 방송 전통',
-    when: (v) => many(v) && v.s.tau > 200 * DAY, rate: (v) => 0.15, once: 'show', trigger: (v) => many(v) && v.s.tau > 200 * DAY && chance(0.002),
+    when: (v) => many(v) && v.s.tau > 200 * DAY && !v.s.flags.show, rate: (v) => 0.2,
     options: [
-      { label: '게스트로 나간다', hint: '', go: (v) => ({ text: '지구에서 뭘 제일 먼저 먹을지 인터뷰했어요. 답이 세 시간 걸렸어요.', morale: 0.12, bond: 1 }) },
-      { label: '듣기만 한다', hint: '', go: (v) => ({ text: '저녁 일곱 시가 기다려지는 시간이 됐어요.', morale: 0.08 }) },
+      { label: '게스트로 나간다', hint: '', go: (v) => ({ text: '지구에서 뭘 제일 먼저 먹을지 인터뷰했어요. 답이 세 시간 걸렸어요.', morale: 0.12, bond: 1, flag: 'show' }) },
+      { label: '듣기만 한다', hint: '', go: (v) => ({ text: '저녁 일곱 시가 기다려지는 시간이 됐어요.', morale: 0.08, flag: 'show' }) },
     ],
   },
   {
@@ -112,8 +112,8 @@ export const MORE_EVENTS = [
     src: IMAGINE,
     when: (v) => v.s.tau > 5 * DAY && v.s.tau < 400 * DAY && !v.s.flags.stowaway && v.ship.crew > 1, rate: (v) => 0.25,
     options: [
-      { label: '받아들인다', hint: '먹는 입이 하나 늘어요. 손도 하나 늘고요.', go: (v) => { const [n, r] = newcomer(v); return { text: `${n}이라고 해요. 전기 일을 할 줄 안대요. 식량표를 다시 썼어요.`, crewGain: 1, newMate: { name: n, role: r }, morale: 0.1, flag: 'stowaway' }; } },
-      { label: '격리실에 두고 지켜본다', hint: '병을 옮길 수도, 그들이 보낸 사람일 수도 있어요.', go: (v) => chance(0.8) ? (() => { const [n, r] = newcomer(v); return { text: `열흘 뒤 격리를 풀었어요. ${n}은 그 뒤로 식탁 가장 끝에 앉아요.`, crewGain: 1, newMate: { name: n, role: r }, flag: 'stowaway' }; })() : { text: '사흘째 밤 격리실이 비어 있었어요. 에어록은 닫혀 있었고요. 아무도 설명하지 못했어요.', morale: -0.15, flag: 'contact' } },
+      { label: '받아들인다', hint: '먹는 입이 하나 늘어요. 손도 하나 늘고요.', go: (v) => { const [n, r] = newcomer(v); return { text: `전기 일을 할 줄 안대요. 동료 ${v.s.mates.length + 1}번이 됐어요. 식량표를 다시 썼어요.`, crewGain: 1, newMate: { name: n, role: r }, morale: 0.1, flag: 'stowaway' }; } },
+      { label: '격리실에 두고 지켜본다', hint: '병을 옮길 수도, 그들이 보낸 사람일 수도 있어요.', go: (v) => chance(0.8) ? (() => { const [n, r] = newcomer(v); return { text: `열흘 뒤 격리를 풀었어요. 동료 ${v.s.mates.length + 1}번은 그 뒤로 식탁 가장 끝에 앉아요.`, crewGain: 1, newMate: { name: n, role: r }, flag: 'stowaway' }; })() : { text: '사흘째 밤 격리실이 비어 있었어요. 에어록은 닫혀 있었고요. 아무도 설명하지 못했어요.', morale: -0.15, flag: 'contact' } },
       { label: '구조 캡슐에 태워 내보낸다', hint: '캡슐엔 식량 한 달치가 있어요. 그 사람이 어떻게 될지는 몰라요.', go: (v) => ({ text: '캡슐이 멀어지는 걸 다 같이 봤어요. 아무도 저녁을 먹지 않았어요.', morale: -0.25, flag: 'stowaway' }) },
     ],
   },
@@ -141,7 +141,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'artifact', cat: 'sf', title: '화물칸에서 낮게 우는 소리', fx: 'glow',
+    id: 'artifact', cat: 'sf', title: '화물칸에 낯선 물체가 있어요', fx: 'glow',
     desc: (v) => '식량 상자 뒤에서 손바닥만 한 검은 물체가 울려요. 따뜻해요. 우리 것이 아니에요. 그들이 두고 간 것 같아요.',
     src: IMAGINE + ' · 영감: 2001 스페이스 오디세이',
     when: (v) => v.s.tau > 20 * DAY && !v.s.flags.artifact, rate: (v) => 0.1,
@@ -168,13 +168,13 @@ export const MORE_EVENTS = [
     src: IMAGINE + ' · 영감: 에일리언, 패신저스',
     when: (v) => v.s.tau > 100 * DAY && !v.s.flags.pod, rate: (v) => 0.06,
     options: [
-      { label: '끌어 들여 깨운다', hint: '사람이 하나 늘어요. 아니면 다른 것이 늘어요.', go: (v) => chance(0.7) ? (() => { const [n] = newcomer(v); return { text: `깨어나는 데 이틀. ${n}이라고 했어요. 우리처럼 끌려왔고 다른 배에 있었대요. 그 배는 이제 없대요.`, crewGain: 1, newMate: { name: n, role: '생존자' }, morale: 0.1, flag: 'pod' }; })() : { text: '깨어나지 않았어요. 캡슐을 열자 안은 비어 있었고 바닥에 모래 한 줌만 있었어요. 식량 창고가 그날 밤 10 % 비었어요.', food: -60, morale: -0.15, flag: 'pod', flag2: 'contact' } },
+      { label: '끌어 들여 깨운다', hint: '사람이 하나 늘어요. 아니면 다른 것이 늘어요.', go: (v) => chance(0.7) ? (() => { const [n] = newcomer(v); return { text: `깨어나는 데 이틀. 우리처럼 끌려왔고 다른 배에 있었대요. 그 배는 이제 없대요. 동료 ${v.s.mates.length + 1}번이 됐어요.`, crewGain: 1, newMate: { name: n, role: '생존자' }, morale: 0.1, flag: 'pod' }; })() : { text: '깨어나지 않았어요. 캡슐을 열자 안은 비어 있었고 바닥에 모래 한 줌만 있었어요. 식량 창고가 그날 밤 10 % 비었어요.', food: -60, morale: -0.15, flag: 'pod', flag2: 'contact' } },
       { label: '밧줄로 묶어 끌고 간다', hint: '지구에서 깨우면 돼요. 속도가 조금 줄어요.', go: (v) => ({ text: '배 뒤에 캡슐이 따라와요. 밤마다 그쪽을 한 번씩 봐요.', vFactor: 0.97, flag: 'pod', morale: 0.03 }) },
       { label: '지나간다', hint: '', go: (v) => ({ text: '캡슐은 뒤로 멀어졌어요. 유리 너머 눈이 떠진 것처럼 보였어요. 아마 서리였겠죠.', morale: -0.08, flag: 'pod' }) },
     ],
   },
   {
-    id: 'whale', cat: 'sf', title: '거대한 그림자가 노래해요', fx: 'glow',
+    id: 'whale', cat: 'sf', title: '거대한 그림자가 전파로 노래해요', fx: 'glow',
     desc: (v) => '별들이 한 줄로 가려지며 지나가요. 길이가 몇 km. 라디오에서 아주 낮은 소리가 느리게 오르내려요. 고래 소리 같아요.',
     src: IMAGINE + ' · 영감: 컨택트 (2016), 스타 트렉 IV',
     when: (v) => v.s.tau > 150 * DAY && !v.s.flags.whale, rate: (v) => 0.04,
@@ -196,7 +196,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'pet', cat: 'crew', title: '식량 창고에 작은 생물',
+    id: 'pet', cat: 'crew', title: '창고에 낯선 생물이 있어요',
     desc: (v) => '손바닥 크기, 다리 여섯, 눈은 둘. 상자 틈에 들어 있었어요. 우리 식량을 조금 먹었어요. 1973년 스카이랩엔 거미 두 마리가 타고 있었어요.',
     src: 'Skylab 3 (1973) 거미 Arabella·Anita 실험; ' + IMAGINE,
     when: (v) => v.s.tau > 10 * DAY && !v.s.flags.pet, rate: (v) => 0.1,
@@ -207,7 +207,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'beacon', cat: 'sf', title: '앞길에 등대', fx: 'glow',
+    id: 'beacon', cat: 'sf', title: '앞쪽에서 규칙적인 신호가 와요', fx: 'glow',
     desc: (v) => '항로 앞쪽에서 7초마다 한 번씩 짧은 전파가 와요. 자연에는 이렇게 규칙적인 것이 펄서밖에 없는데, 펄서는 아니에요. 지구 쪽을 가리켜요.',
     src: IMAGINE,
     when: (v) => v.s.f > 0.2 && v.s.f < 0.8 && !v.s.flags.beacon, rate: (v) => 0.05,
@@ -228,7 +228,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'clock', cat: 'sf', title: '두 시계가 달라요', fx: 'dim',
+    id: 'clock', cat: 'sf', title: '여섯 시간이 사라졌어요', fx: 'dim',
     desc: (v) => '항법 시계와 손목시계가 여섯 시간 차이 나요. 어제까지 같았어요. 모두 똑같이 피곤하고, 식량이 하루치 더 비었어요.',
     src: IMAGINE + ' · 영감: 인터스텔라, 미싱 타임 보고들',
     when: (v) => v.s.tau > 30 * DAY && !v.s.flags.clock, rate: (v) => 0.05,
@@ -248,7 +248,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'oumuamua', cat: 'rock', title: '길쭉한 바위가 나란히 가요',
+    id: 'oumuamua', cat: 'rock', title: '성간 바위가 나란히 가요',
     desc: (v) => '길이 몇백 m, 담배처럼 길고 붉어요. 2017년 지구 곁을 지난 오우무아무아처럼 햇빛만으로는 설명이 안 되는 만큼 살짝 밀려 가요.',
     src: "1I/ʻOumuamua (2017) 관측: 길이 100–400 m, 비중력 가속 (Micheli 2018); " + IMAGINE,
     when: (v) => v.rAU() > 2 && !v.s.flags.oumuamua, rate: (v) => 0.05,
@@ -258,7 +258,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'dyson', cat: 'sf', title: '별 둘레에 그림자 조각들', fx: 'dim',
+    id: 'dyson', cat: 'sf', title: '별 둘레에 인공 구조물 같은 그림자', fx: 'dim',
     desc: (v) => '지나가는 별의 빛이 규칙적으로 깜빡여요. 큼직한 무언가가 궤도를 돌아요. 수백 개. 2015년 타비의 별도 이렇게 깜빡여 소동이 났었어요.',
     src: "KIC 8462852 (타비의 별) 밝기 변화 (Boyajian 2016); " + IMAGINE,
     when: (v) => v.from.kind !== 'solar' && v.rAU() > 1e4 && !v.s.flags.dyson, rate: (v) => 0.04,
@@ -279,7 +279,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'kidney', cat: 'med', title: '옆구리가 끊어질 듯 아파요',
+    id: 'kidney', cat: 'med', title: '신장 결석이 생겼어요',
     desc: (v) => '무중력에서는 뼛속 칼슘이 오줌으로 빠져 결석이 잘 생겨요. 우주비행사들이 가장 두려워하는 통증 중 하나예요.',
     src: 'NASA 신장 결석 위험 (Pietrzyk 2007): 비행 중 발생 사례 다수; ISS 초음파 쇄석 연구',
     rate: (v) => 0.08,
@@ -290,7 +290,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'vision', cat: 'body', title: '글자가 흐려 보여요',
+    id: 'vision', cat: 'body', title: '눈이 나빠졌어요',
     desc: (v) => '우주비행사의 60 % 가 겪는 일이에요. 머리로 몰린 체액이 안구 뒤를 눌러요. 안경이 필요해졌어요.',
     src: 'NASA SANS (우주비행 관련 신경안구 증후군), 장기 체류 60 % 이상 보고 (Lee 2020)',
     when: (v) => v.s.tau > 180 * DAY && !v.s.flags.vision, rate: (v) => 0.3,
@@ -320,7 +320,7 @@ export const MORE_EVENTS = [
     ],
   },
   {
-    id: 'solar-ship', cat: 'sun', title: '태양이 가까워져요',
+    id: 'solar-ship', cat: 'sun', title: '태양에 가까워 배가 뜨거워요',
     desc: (v) => `${v.rAU().toFixed(2)} AU. 지구보다 태양에 가까운 길이에요. 선체 온도가 오르고 냉각 펌프가 쉬지 않아요.`,
     src: 'Parker Solar Probe 열 차폐 설계; Mercury 표면 온도 430 °C',
     when: (v) => v.rAU() < 0.75 && !v.s.flags.hot, rate: (v) => 3,

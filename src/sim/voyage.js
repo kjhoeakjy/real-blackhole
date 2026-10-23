@@ -14,6 +14,8 @@ const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'water-retry', 'hi
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
 // 되풀이돼도 되는 사건 (부족 경고처럼 상황이 이어지는 것)
 const REPEATABLE = new Set(['oga-retry', 'water-retry']);
+// 분류별 가중치: 뻔한 고장·정비는 드물게, 그들·시공간·동료·바깥 신호는 자주
+const FUN = { sf: 2.2, bh: 2.2, signal: 1.8, crew: 1.5, mind: 1.2, sun: 0.7, med: 0.6, body: 0.5, fire: 0.4, air: 0.4, water: 0.4, power: 0.4, comp: 0.4, rock: 0.5, nav: 0.5 };
 // 동료 후보: 이름·역할. 배에 오를 때 정원-1 명을 뽑는다
 const MATES = [['서하린', '의사'], ['강민준', '기관사'], ['오지우', '항법사'], ['레나 오카포', '식물학자'], ['토마스 레예스', '통신사'], ['박도윤', '조종사'], ['아이샤 라만', '물리학자'], ['이수아', '정비사'], ['사토 유키', '심리상담사'], ['정하람', '요리사'], ['마테오 비앙키', '지질학자'], ['한세영', '간호사'], ['니콜라 페트로프', '전기기사'], ['최은우', '생물학자'], ['마리암 하다드', '천문학자']];
 const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -32,7 +34,7 @@ export class Voyage {
       power: 1, hull: 1, health: 1, morale: 1, fuel: 1, navRisk: 0, vFactor: 1,
       alive: true, arrived: false, death: null, log: [], flags: {}, cancerAt: null, deathAt: null,
       hib: false, hibHalf: false, nextCourse: 0.35, lowPowerDays: 0, starveDays: 0, thirstDays: 0, chokeDays: 0, lastEventTau: -Infinity, events: 0,
-      mates: shuffle(MATES.slice()).slice(0, Math.max(0, ship.crew - 1)).map(([name, role]) => ({ name, role, alive: true, bond: 0 })),
+      mates: shuffle(MATES.slice()).slice(0, Math.max(0, ship.crew - 1)).map(([, role], i) => ({ name: `동료 ${i + 1}`, role, alive: true, bond: 0 })),   // 이름 대신 번호 (사용자 요청)
     };
     this.weather = null;   // 실제 우주 날씨 (UI 가 넣어 준다): {kp, xray, cls}
     this.pending = null;
@@ -66,7 +68,7 @@ export class Voyage {
     this.s.crewAlive = 1 + this.alive().length;
     return lost;
   }
-  addMate(name, role) { this.s.mates.push({ name, role, alive: true, bond: 0, joinedTau: this.s.tau }); this.s.crewAlive = 1 + this.alive().length; }
+  addMate(name, role) { this.s.mates.push({ name: `동료 ${this.s.mates.length + 1}`, role, alive: true, bond: 0, joinedTau: this.s.tau }); this.s.crewAlive = 1 + this.alive().length; }
 
   // dt: 배 시계로 흐르는 시간(s). cooldown: 사건 사이 최소 간격(s, 연출용)
   step(dt, cooldown = 0) {
@@ -124,7 +126,7 @@ export class Voyage {
     for (const e of EVENTS) {
       if (!e.rate || !ok(e) || (e.when && !e.when(this))) continue;
       if (!REPEATABLE.has(e.id) && (seen[e.id] || 0) >= 2) continue;   // 같은 사건은 한 항해에 최대 두 번
-      const rep = REPEATABLE.has(e.id) ? 1 : Math.pow(0.08, seen[e.id] || 0) * Math.pow(0.85, seenCat[e.cat] || 0);
+      const rep = (REPEATABLE.has(e.id) ? 1 : Math.pow(0.08, seen[e.id] || 0) * Math.pow(0.85, seenCat[e.cat] || 0)) * (FUN[e.cat] ?? 1);
       if (R() < e.rate(this) * rateMul * rep * dy) return this._raise(e);
     }
   }

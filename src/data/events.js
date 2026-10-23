@@ -107,17 +107,17 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'bone', cat: 'body', title: '다리가 가늘어졌어요',
+    id: 'bone', cat: 'body', title: '무중력으로 뼈와 근육이 줄어요',
     desc: (v) => '반년 무중력. 거울 속 다리가 눈에 띄게 가늘어요. 뼈는 한 달에 1 % 씩 빠지고 있어요.',
     src: 'NASA Human Research Program; LeBlanc et al. 2000 (골손실 1–1.5 %/월)',
-    trigger: (v) => v.s.tau > 180 * DAY && !v.s.flags.bone, once: 'bone',
+    when: (v) => v.s.tau > 180 * DAY && !v.s.flags.bone, rate: (v) => 0.6,
     options: [
       { label: '하루 2시간 운동을 시작한다', hint: 'ISS 승무원의 하루예요. 러닝머신·자전거·저항 기구.',
-        go: (v) => ({ text: '매일 두 시간. 지루하지만 착륙 때 걸어 나갈 수 있을 거예요.', flag: 'exercise', morale: 0.05 }) },
+        go: (v) => ({ flag2: 'bone', text: '매일 두 시간. 지루하지만 착륙 때 걸어 나갈 수 있을 거예요.', flag: 'exercise', morale: 0.05 }) },
       { label: '운동은 내키는 날만', hint: '착륙 충격을 버티는 건 뼈예요.',
-        go: (v) => ({ text: '운동은 가끔. 1년 뒤면 들것이 필요할 거예요.', health: -0.1, flag: 'noexercise' }) },
+        go: (v) => ({ flag2: 'bone', text: '운동은 가끔. 1년 뒤면 들것이 필요할 거예요.', health: -0.1, flag: 'noexercise' }) },
       { label: '약으로 막는다 (비스포스포네이트)', hint: 'ISS 에서 실험한 골다공증 약이에요. 효과가 있었지만 위장을 상하게 해요.',
-        go: (v) => chance(0.7) ? { text: '매주 한 알. 뼈는 거의 그대로예요.', flag: 'exercise' } : { text: '약이 위를 상하게 해 끊었어요. 운동으로 돌아갔어요.', health: -0.05, flag: 'exercise' } },
+        go: (v) => (v.s.flags.bone = true) && chance(0.7) ? { text: '매주 한 알. 뼈는 거의 그대로예요.', flag: 'exercise' } : { text: '약이 위를 상하게 해 끊었어요. 운동으로 돌아갔어요.', health: -0.05, flag: 'exercise' } },
     ],
   },
   // ---------- 사람 ----------
@@ -136,7 +136,7 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'lonely', cat: 'mind', title: '아무도 없는 시간',
+    id: 'lonely', cat: 'mind', title: '혼자 지낸 지 오래됐어요',
     desc: (v) => `${Math.round(v.s.tau / DAY)}일 동안 목소리를 못 들었어요. 요즘은 잠이 오지 않아요.`,
     src: 'Mars-500 수면 연구 (Basner et al. 2013); NASA HERA 고립 실험',
     when: (v) => v.s.crewAlive === 1 && v.s.tau > 60 * DAY, rate: (v) => 0.35,
@@ -150,7 +150,7 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'giveup', cat: 'mind', title: '더는 못 하겠어요',
+    id: 'giveup', cat: 'mind', title: '의욕이 바닥났어요',
     desc: (v) => '아침에 눈을 떠도 일어날 이유가 없어요. 계기판 경고등을 사흘째 못 본 척하고 있어요.',
     src: 'NASA 행동건강 위험 보고 (BMed); 남극 월동 우울 사례',
     when: (v) => v.s.morale < 0.15, rate: (v) => 3,
@@ -220,7 +220,7 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'belt', cat: 'rock', title: '소행성대',
+    id: 'belt', cat: 'rock', title: '소행성대에 들어가요',
     desc: (v) => '화성과 목성 사이. 영화와 달리 거의 비어 있어요. 소행성끼리도 평균 수백만 km 떨어져 있어요.',
     src: 'NASA/JPL: 소행성대 통과 탐사선 충돌 확률 < 1/10⁹',
     trigger: (v) => v.from.kind === 'solar' && v.s.startAU > 3.3 && v.rAU() < 3.3 && !v.s.flags.belt, once: 'belt',
@@ -234,7 +234,7 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'jupiter', cat: 'nav', title: '목성 곁',
+    id: 'jupiter', cat: 'nav', title: '목성 곁을 지나요',
     desc: (v) => '목성 중력으로 속도를 얻을 수 있어요. 뉴허라이즌스는 2007년 그렇게 3년을 줄였어요. 대신 방사선대 가까이 지나요.',
     src: 'New Horizons 2007 목성 통과 +4 km/s; Juno 방사선 측정; 유로파 궤도 5.4 Sv/일',
     trigger: (v) => v.from.kind === 'solar' && v.s.startAU > 5.5 && v.rAU() < 5.6 && !v.s.flags.jupiter && v.beta < 0.01, once: 'jupiter',
@@ -275,7 +275,7 @@ export const EVENTS = [
     ],
   },
   {
-    id: 'companion', cat: 'signal', title: '창밖에 빛나는 점',
+    id: 'companion', cat: 'signal', title: '정체불명의 빛이 따라와요',
     desc: (v) => '배와 나란히 달리는 빛나는 점이 있어요. 몇 시간째 거리가 그대로예요. 아폴로 승무원들도 창밖의 "반딧불"을 봤어요.',
     src: '아폴로·머큐리 승무원 "반딧불" 목격 (떨어져 나온 얼음·단열재 조각); 2017 ʻOumuamua 성간 천체',
     rate: (v) => 0.1,
@@ -360,10 +360,10 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'hib-fault', cat: 'sf', title: '캡슐이 나를 깨웠어요',
+    id: 'hib-fault', cat: 'sf', title: '동면 캡슐이 고장 나 깨어났어요',
     desc: (v) => `예정보다 ${Math.round(v.remaining() / YEAR).toLocaleString('en-US')}년 일찍 눈을 떴어요. 캡슐 화면엔 "오류"뿐이에요. 다른 캡슐은 조용해요.`,
     src: SF('패신저스 (2016)'),
-    when: (v) => v.s.hib, rate: (v) => 0.08,
+    when: (v) => v.s.hib, rate: (v) => 0.03,
     options: [
       { label: '캡슐을 고쳐 다시 잠든다', hint: '설명서는 "자격 있는 기술자만" 이라고 적혀 있어요.', go: (v) => chance(0.5) ? { text: '사흘 동안 설명서를 읽고 고쳤어요. 다시 안개가 올라왔어요.', hib: true, delay: 3 * DAY } : { text: '고칠 수 없었어요. 깨어서 가야 해요.', hib: false, morale: -0.2 } },
       { label: '깨어서 간다', hint: '혼자 깨어 있는 긴 시간이 시작돼요.', go: (v) => ({ text: '불을 켜고, 식당에 앉았어요. 아무도 없어요.', hib: false, morale: -0.15 }) },
@@ -382,7 +382,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'derelict', cat: 'sf', title: '오래된 조난 신호',
+    id: 'derelict', cat: 'sf', title: '버려진 배의 조난 신호',
     desc: (v) => '20년 전 실종된 탐사선의 호출 부호예요. 신호는 자동 반복이에요. 궤도를 조금 틀면 나흘 뒤 닿아요.',
     src: SF('에일리언 (1979), 이벤트 호라이즌'),
     rate: (v) => 0.07,
@@ -393,7 +393,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'bigship', cat: 'sf', title: '레이더에 커다란 물체',
+    id: 'bigship', cat: 'sf', title: '거대한 물체가 나란히 가요',
     desc: (v) => '우리 배보다 열 배 큰 물체가 같은 속도로 나란히 가요. 금속처럼 전파를 반사해요. 사흘째예요.',
     src: SF('컨택트 (1997), 어라이벌 (2016), 라마와의 랑데부'),
     rate: (v) => 0.05,
@@ -404,7 +404,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'roguebh', cat: 'bh', title: '앞쪽 별빛이 고리처럼 휘어요',
+    id: 'roguebh', cat: 'bh', title: '떠돌이 블랙홀이 항로에 있어요',
     desc: (v) => '항로 앞에 아무것도 안 보이는데 별들이 밀려나요. 떠돌이 블랙홀이에요. 우리은하에 1억 개쯤 떠돌아요.',
     src: '떠돌이 블랙홀 OGLE-2011-BLG-0462 (2022, 허블 미세중력렌즈) · ' + SF('인터스텔라 (2014)'),
     when: (v) => v.from.kind !== 'solar' && v.s.f < 0.9, rate: (v) => 0.03,
@@ -426,7 +426,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'supply', cat: 'sf', title: '무인 보급선',
+    id: 'supply', cat: 'sf', title: '무인 보급선이 항로에 있어요',
     desc: (v) => '지구가 몇 년 전 쏘아 보낸 무인 보급선 궤도가 우리 항로와 겹쳐요. 식량과 부품이 실려 있대요. 도킹은 자동이 아니에요.',
     src: SF('마션 (2015)'),
     when: (v) => v.commDelay() < 30 * DAY && v.s.tau > 30 * DAY, rate: (v) => 0.15,
@@ -458,7 +458,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'love', cat: 'crew', title: '가까워졌어요',
+    id: 'love', cat: 'crew', title: (v) => `${who(v)}과 가까워졌어요`,
     desc: (v) => '같은 창가에서 오래 같이 있다 보니. 배 안의 다른 사람들도 눈치챘어요.',
     src: SF('패신저스 (2016)') + ' · 남극 월동 기지 관계 연구',
     when: (v) => v.s.crewAlive > 1 && v.s.tau > YEAR, rate: (v) => 0.12,
@@ -531,7 +531,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'comet', cat: 'rock', title: '혜성 핵',
+    id: 'comet', cat: 'rock', title: '혜성이 항로 곁을 지나요',
     desc: (v) => '얼음 덩어리가 항로 가까이 지나가요. 지름 2 km. 물이 수십억 톤이에요.',
     src: '로제타 탐사선 67P 착륙 (2014); ' + SF('아마겟돈, 딥 임팩트'),
     when: (v) => v.rAU() < 50, rate: (v) => 0.05,
@@ -542,7 +542,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'rogue', cat: 'sf', title: '떠돌이 행성',
+    id: 'rogue', cat: 'sf', title: '떠돌이 행성이 항로를 가로질러요',
     desc: (v) => '별이 없는 행성이 항로를 가로질러요. 목성만 해요. 표면은 영하 200도, 구름은 번개로 빛나요.',
     src: '떠돌이 행성 SIMP J0136 등; ' + SF('멜랑콜리아 (2011)'),
     when: (v) => v.from.kind !== 'solar' && v.s.f < 0.95, rate: (v) => 0.04,
@@ -553,7 +553,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'silence', cat: 'sf', title: '지구가 조용해요',
+    id: 'silence', cat: 'sf', title: '지구 신호가 끊겼어요',
     desc: (v) => `${Math.round(v.s.tau / YEAR)}년 동안 매주 오던 지구의 신호가 넉 달째 끊겼어요. 어떤 주파수에도 사람 목소리가 없어요.`,
     src: SF('인터스텔라, 어둠의 왼손') + ' · 보이저 통신 중단 사례',
     when: (v) => v.s.tau > 20 * YEAR && !v.s.flags.noantenna, rate: (v) => 0.05, once: 'silence',
@@ -574,7 +574,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'mold', cat: 'water', title: '벽에 곰팡이',
+    id: 'mold', cat: 'water', title: '벽에 곰팡이가 번져요',
     desc: (v) => '환풍구 둘레가 거뭇해요. 미르는 말년에 곰팡이가 창을 뒤덮었어요.',
     src: 'Mir 곰팡이 보고 (1990년대, 창·배선 부식)',
     when: (v) => v.s.tau > 120 * DAY, rate: (v) => 0.2,
@@ -585,7 +585,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'gift', cat: 'earth', title: '뜻밖의 소포',
+    id: 'gift', cat: 'earth', title: '숨겨진 상자를 찾았어요',
     desc: (v) => '창고 바닥에서 출발 전 누군가 숨겨 둔 상자를 찾았어요. 메모: "힘들 때 열 것."',
     src: 'ISS 보급선 "케어 패키지" 관행',
     when: (v) => v.s.morale < 0.5, rate: (v) => 0.3, once: 'gift',
@@ -595,7 +595,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'grb', cat: 'signal', title: '하늘이 번쩍였어요',
+    id: 'grb', cat: 'signal', title: '감마선 폭발이 센서를 덮쳤어요',
     desc: (v) => '먼 은하에서 온 감마선 폭발이 10초 동안 모든 센서를 포화시켰어요. 수십억 년 전에 일어난 일이에요.',
     src: 'GRB 221009A (2022, 역대 최강); 스위프트 관측',
     rate: (v) => 0.03,
@@ -605,7 +605,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'twin', cat: 'sf', title: '우리 배와 똑같은 신호',
+    id: 'twin', cat: 'sf', title: '우리가 보낸 교신이 되돌아와요',
     desc: (v) => '우리 호출 부호, 우리 목소리. 사흘 전 우리가 보낸 교신이 앞쪽에서 돌아와요. 누가 녹음해서 다시 보내는 걸까요.',
     src: SF('이벤트 호라이즌, 코히어런스'),
     when: (v) => v.from.kind !== 'solar', rate: (v) => 0.03,
@@ -615,7 +615,7 @@ export const SF_EVENTS = [
     ],
   },
   {
-    id: 'oldage', cat: 'body', title: '손이 떨려요',
+    id: 'oldage', cat: 'body', title: '나이 들어 손이 떨려요',
     desc: (v) => `${Math.floor(v.s.age)}세. 계기판 글씨가 흐리고, 손이 떨려 나사를 떨어뜨려요. 배는 내가 고쳐야 해요.`,
     src: '고령 우주비행 (존 글렌 77세, 1998)',
     trigger: (v) => v.s.age >= 70 && !v.s.flags.oldage, once: 'oldage',
