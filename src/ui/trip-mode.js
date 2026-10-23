@@ -113,7 +113,7 @@ export class TripMode {
     const n = this.starts().length;
     this.root = el(`<div>
       <div class="section"><div class="eyebrow">지금 이 순간의 우주</div><div class="title-lg">외계인에게 납치됐다</div>
-        <p class="note" style="margin-top:6px">납치된 뒤 우주 어딘가에서 눈을 뜬다. 어디인지는 고를 수 없다. 배에 오르면 시간이 흐르고 나이가 들고 사건이 끼어든다. 그때마다 고른다. 거리·속도·위험은 전부 실제 측정값.</p></div>
+        <p class="note" style="margin-top:6px">납치된 뒤 우주 어딘가에 버려진다. 장소는 무작위. 배에 오르면 시간이 흐르고 나이가 들고 사건이 끼어든다. 그때마다 고른다. 거리·속도·위험은 전부 실제 측정값.</p></div>
       <div class="section">
         <div class="row"><button class="btn primary block" id="t-go">처음부터</button></div>
         <p class="note tiny" style="margin-top:8px">출발지 ${n}곳 중 하나: 달·행성·위성, 탐사선 곁, 가까운 별, 성운, 블랙홀 곁, 다른 은하.</p>
@@ -135,7 +135,7 @@ export class TripMode {
   }
   _prologue() {
     const pr = this.prologue;
-    pr.querySelector('.lines').innerHTML = `<p>눈을 뜬다.</p><p class="faint">마지막 기억은 집 앞의 길, 그리고 하늘에서 내려온 빛.</p><p>여기는 지구가 아니다.</p><p class="faint">그들은 떠났다. 남은 것은 우주선 한 척과 식량.</p><p>지구로 돌아가야 한다.</p>`;
+    pr.querySelector('.lines').innerHTML = `<p>외계인에게 납치됐다.</p><p class="faint">기억은 집 앞에서 끊겼다. 깨어난 곳은 지구가 아니다.</p><p>그들은 떠났다.</p><p class="faint">남은 것은 우주선 한 척과 식량.</p><p>지구로 돌아간다.</p>`;
     pr.classList.remove('hidden');
     const pc = pr.querySelector('canvas'); const t0 = performance.now(); cancelAnimationFrame(this._prRaf);
     const loop = () => { if (pr.classList.contains('hidden')) return; const dpr = Math.min(devicePixelRatio || 1, 1.5); if (pc.width !== Math.round(innerWidth * dpr)) { pc.width = Math.round(innerWidth * dpr); pc.height = Math.round(innerHeight * dpr); } drawAbduction(pc, (performance.now() - t0) / 1000); this._prRaf = requestAnimationFrame(loop); };
@@ -179,7 +179,7 @@ export class TripMode {
     const { from, distM } = this.route;
     if (from.kind !== 'bh') { this.scene.classList.remove('hidden', 'lift'); this.sceneOn = true; this._drawScene(); }
     const kindText = { solar: '태양계', probe: '태양계 바깥', star: '별', bh: '블랙홀 곁', galaxy: '다른 은하' }[from.kind];
-    this._card(`<div class="step">${icon('nav')} 눈을 뜬 곳 · ${kindText}</div><div class="t">${esc(from.name)}</div>
+    this._card(`<div class="step">${icon('nav')} 현재 위치 · ${kindText}</div><div class="t">${esc(from.name)}</div>
       <div class="d">${from.note ? esc(from.note) + '. ' : ''}${{ solar: '지평선 위로 그들의 배가 멀어진다. 바위 사이에 캡슐 한 척.', probe: '우주복 안이다. 옆에는 1977년에 떠난 탐사선이 조용히 돌고, 조금 떨어진 곳에 배가 기다린다.', star: '낯선 별 아래 바위 벌판. 바위 사이에 캡슐 한 척.', galaxy: '별도 땅도 없는 깊은 어둠. 창밖에 은하 하나가 하늘을 채우고, 배는 이미 등 뒤에 있다.', bh: '블랙홀의 빛 고리가 하늘을 채운다. 배는 지평선 바깥에 떠 있다.' }[from.kind]}<br>지구까지 ${fmtDist(distM)}. 빛으로도 ${fmtDur(distM / 299792458)}.${from.kind === 'bh' ? ` 블랙홀 질량 ${fmtSolar(from.bh.mass)}.` : ''}</div>
       <div class="opts">${opt(0, '우주선으로', '배 세 척 중 하나를 고른다')}</div>`, () => this._hangar());
     this.ctx.els.panel.classList.add('collapsed');
@@ -314,7 +314,7 @@ export class TripMode {
       <div><b class="num">${s.flags.contact ? '있었어요' : '없었어요'}</b><span>설명 못 한 일</span></div>
     </div>${s.mates.length ? `<div class="mates">${s.mates.map((m) => `<span class="${m.alive ? '' : 'gone'}">${esc(m.name)} <em>${esc(m.role)}</em></span>`).join('')}</div>` : ''}`;
     this._card(`${head}${kv}<div class="section-title" style="margin-top:18px">지나온 길</div><ul class="life">${rows}</ul>
-      <div class="opts" style="margin-top:16px">${opt(0, '다시 시작', '다른 곳에서 눈을 뜬다')}</div>`, () => this._setup(true));
+      <div class="opts" style="margin-top:16px">${opt(0, '다시 시작', '다른 곳, 다른 확률로')}</div>`, () => this._setup(true));
     this._hud();
     this._panelLog();
   }
