@@ -20,6 +20,7 @@ const PLAY_SECONDS = 110;        // 한 항해(또는 한 인생)가 흐르는 �
 const MAX_LIFE_YEARS = 70;       // 이보다 긴 항해는 어차피 수명 안에서 끝난다
 const EVENTS_PER_LIFE = 18;      // 한 항해에 사건이 이보다 촘촘히 오지 않게 (배 시계 기준 최소 간격)
 const SPEEDS = [1, 3, 10];
+const HINTS_PER_VOYAGE = 2;      // 힌트는 한 항해에 두 번
 const CAT = {
   sun: ['태양', '#f2b25c'], fire: ['불', '#ff7a5c'], air: ['공기', '#8fd3ff'], water: ['물', '#7fb3ff'], med: ['몸', '#ff8fa3'], crew: ['동료', '#d9c3ff'],
   mind: ['마음', '#c3b5ff'], comp: ['컴퓨터', '#9ad0c2'], rock: ['충돌', '#e0b48a'], nav: ['항로', '#e9a65b'], power: ['전력', '#ffd56b'], body: ['몸', '#ff8fa3'],
@@ -178,7 +179,7 @@ export class TripMode {
     const horizon = Math.min(total, MAX_LIFE_YEARS * YEAR);
     this.simRate = Math.max(60, horizon / PLAY_SECONDS);   // 배 시계 초 / 실제 초
     this.eventGap = horizon / EVENTS_PER_LIFE;
-    this.state = 'voyage'; this.paused = false; this.shownLog = this.voy.s.log.length; this.resultWait = 0;
+    this.state = 'voyage'; this.paused = false; this.shownLog = this.voy.s.log.length; this.resultWait = 0; this.hints = HINTS_PER_VOYAGE;
     this.card.classList.add('hidden');
     this.cockpit.classList.remove('hidden'); this.top.classList.remove('hidden'); this.ctl.classList.remove('hidden');
     this.ctx.els.panel.classList.add('collapsed');
@@ -194,32 +195,40 @@ export class TripMode {
     c.querySelectorAll('.sp').forEach((b) => b.addEventListener('click', () => { this.speed = +b.dataset.s; c.querySelectorAll('.sp').forEach((x) => x.classList.toggle('on', x === b)); }));
     c.querySelector('#v-auto').addEventListener('click', () => { this.auto = !this.auto; c.querySelector('#v-auto').classList.toggle('on', this.auto); });
   }
-  _card(html, onPick) {
+  _card(html, onPick, onHint = null) {
+    clearTimeout(this._resumeT); this.card.onclick = null;
     this.card.innerHTML = html;
     this.card.classList.remove('hidden');
     this.card.scrollTop = 0;
-    bindOpts(this.card, onPick);
+    bindOpts(this.card, onPick, onHint);
   }
   _eventCard() {
     const v = this.voy, p = v.pending, s = v.s;
     const [catName, color] = CAT[p.ev.cat] || CAT.nav;
     this.card.style.setProperty('--cat', color);
     const html = `<div class="step">${icon(p.ev.cat)} ${catName} · ${fmtAgo(s.tau)} · ${Math.floor(s.age)}세</div><div class="t">${esc(p.title)}</div><div class="d">${esc(p.desc)}</div>
-      <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
-    this._card(html, (i) => this._pick(i));
+      <div class="opts">${p.options.map((o, i) => opt(i, o.label, '', o.hint, '', this.hints)).join('')}</div><div class="src">${esc(p.ev.src)}</div>`;
+    this._card(html, (i) => this._pick(i), () => { if (this.hints <= 0) return false; this.hints--; this.card.querySelectorAll('.q').forEach((q) => { if (!q.classList.contains('open')) { q.textContent = this.hints > 0 ? `힌트 ${this.hints}` : '힌트 없음'; q.disabled = this.hints <= 0; } }); return true; });
   }
   _pick(i) {
     const v = this.voy;
     const r = v.choose(i);
     if (!r) return;
     this._panelLog();
-    // 결과 문장을 보여주고 계속
+    // 결과 문장을 잠깐 보여주고 저절로 이어진다 (누르면 바로)
     const [catName] = CAT[r.cat] || CAT.nav;
-    this._card(`<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div>
-      <div class="opts">${opt(0, v.done ? '…' : '계속', '')}</div>`, () => this._resume());
+    this.card.innerHTML = `<div class="step">${icon(r.cat)} ${catName}</div><div class="t">${esc(r.choice)}</div><div class="d result">${esc(r.text)}</div><div class="timer"><i></i></div>`;
+    this.card.classList.remove('hidden');
+    const hold = Math.min(5200, 1600 + r.text.length * 45);
+    this.card.querySelector('.timer i').style.transitionDuration = `${hold}ms`;
+    requestAnimationFrame(() => { const t = this.card.querySelector('.timer i'); if (t) t.style.width = '100%'; });
+    clearTimeout(this._resumeT);
+    this._resumeT = setTimeout(() => this._resume(), hold);
+    this.card.onclick = () => { clearTimeout(this._resumeT); this.card.onclick = null; this._resume(); };
     this._hud();
   }
   _resume() {
+    this.card.onclick = null;
     if (this.voy.done) return this._end();
     this.card.classList.add('hidden');
   }
@@ -311,9 +320,7 @@ export class TripMode {
       if (this.auto && cardOpen && this.autoAt && now >= this.autoAt) {
         this.autoAt = -1;
         const opts = this.card.querySelectorAll('.opt');
-        const pickEl = opts[Math.floor(Math.random() * opts.length)];
-        pickEl.classList.add('picked');
-        setTimeout(() => pickEl.click(), 350);
+        if (opts.length) { const pickEl = opts[Math.floor(Math.random() * opts.length)]; pickEl.classList.add('picked'); setTimeout(() => pickEl.click(), 350); }
       }
       if (!v.pending && !this.paused && this.card.classList.contains('hidden')) {
         const simDt = dt * this.simRate * this.speed;
@@ -364,13 +371,21 @@ const PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" wi
 const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5l12 7-12 7z"/></svg>';
 
 // 선택지 한 칸: 제목·설명 + 힌트 버튼 (힌트는 눌러야 펼쳐진다)
-function opt(i, label, fx, hint, cls = '') {
-  return `<div class="opt${cls ? ' ' + cls : ''}" data-i="${i}" tabindex="0"><div class="row"><div><b>${esc(label)}</b>${fx ? `<span>${esc(fx)}</span>` : ''}</div>${hint ? `<button class="q" type="button">힌트</button>` : ''}</div>${hint ? `<div class="hint hidden">${esc(hint)}</div>` : ''}</div>`;
+function opt(i, label, fx, hint, cls = '', hintsLeft = null) {
+  const q = hint ? (hintsLeft == null ? '<button class="q" type="button">힌트</button>' : hintsLeft > 0 ? `<button class="q" type="button">힌트 ${hintsLeft}</button>` : '<button class="q" type="button" disabled>힌트 없음</button>') : '';
+  return `<div class="opt${cls ? ' ' + cls : ''}" data-i="${i}" tabindex="0"><div class="row"><div><b>${esc(label)}</b>${fx ? `<span>${esc(fx)}</span>` : ''}</div>${q}</div>${hint ? `<div class="hint hidden">${esc(hint)}</div>` : ''}</div>`;
 }
-function bindOpts(card, onPick) {
+// onHint: 힌트를 열 때 호출, false 를 돌려주면 열지 않는다 (힌트 횟수 제한)
+function bindOpts(card, onPick, onHint = null) {
   card.querySelectorAll('.opt').forEach((o) => {
     o.addEventListener('click', (e) => {
-      if (e.target.closest('.q')) { const h = o.querySelector('.hint'); const open = h.classList.toggle('hidden'); e.target.textContent = open ? '힌트' : '닫기'; return; }
+      const q = e.target.closest('.q');
+      if (q) {
+        const h = o.querySelector('.hint');
+        if (h.classList.contains('hidden')) { if (q.disabled) return; if (onHint && !onHint()) return; h.classList.remove('hidden'); q.classList.add('open'); q.textContent = '닫기'; }
+        else { h.classList.add('hidden'); q.classList.remove('open'); q.textContent = '열기'; }
+        return;
+      }
       onPick(+o.dataset.i);
     });
     o.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.target.closest('.q')) onPick(+o.dataset.i); });

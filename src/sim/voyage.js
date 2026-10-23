@@ -9,6 +9,8 @@ const FOOD_KG_DAY = 1.83;                         // NASA HIDH, 포장 포함
 const RTG_HALF_LIFE_Y = 87.7;                     // Pu-238
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const R = Math.random;
+// 동면 중에는 컴퓨터가 비상시에만 깨운다: 이 사건들만 온다
+const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
 
 export class Voyage {
@@ -85,26 +87,28 @@ export class Voyage {
     if (s.health <= 0) return this._die('몸이 더는 버티지 못했어요.');
     // 생일
     const ageInt = Math.floor(s.age);
-    if (ageInt > Math.floor(this.age0) && ageInt !== s.flags.lastBirthday) { s.flags.lastBirthday = ageInt; this._log('body', `${ageInt}세. 지구 날짜로 ${this.earthDate()}.`); }
+    if (ageInt > Math.floor(this.age0) && ageInt !== s.flags.lastBirthday) { s.flags.lastBirthday = ageInt; this._log('body', `${ageInt}세. ${s.hib ? '동면 중이에요. ' : ''}지구 날짜로 ${this.earthDate()}.`); }
     // 기록만 남는 순간
     for (const m of MILESTONES) if (m.when(this)) { if (m.flag) s.flags[m.flag] = true; this._log(m.cat, m.text(this)); }
     this.prevR = r;
     // 사건: 조건 사건(한 번)과 무작위 사건(푸아송). 연출을 위해 사건 사이 간격을 둔다
     const rateMul = (1 + (1 - s.morale) * 0.6) * (s.hib ? 0.35 : 1);   // 사기가 낮으면 실수가 는다, 동면 중엔 조용하다
+    const ok = (e) => (!s.hib || HIB_OK.has(e.id)) && !(s.flags.noantenna && ['message', 'badnews', 'supply', 'silence'].includes(e.id)) && !(s.flags.silence && ['message', 'badnews', 'supply'].includes(e.id));
     for (const e of EVENTS) {
-      if (e.trigger && (!e.once || !s.flags[e.once]) && e.trigger(this)) { if (e.once) s.flags[e.once] = true; return this._raise(e); }
+      if (e.trigger && ok(e) && (!e.once || !s.flags[e.once]) && e.trigger(this)) { if (e.once) s.flags[e.once] = true; return this._raise(e); }
     }
     if (s.tau - s.lastEventTau < cooldown) return;
     for (const e of EVENTS) {
-      if (!e.rate || (e.when && !e.when(this))) continue;
+      if (!e.rate || !ok(e) || (e.when && !e.when(this))) continue;
       if (R() < e.rate(this) * rateMul * dy) return this._raise(e);
     }
   }
   _raise(e) {
     const opts = e.options.filter((o) => !o.when || o.when(this));
     const title = typeof e.title === 'function' ? e.title(this) : e.title;
-    const desc = e.desc(this);
-    this.pending = { ev: e, title: typeof e.title === 'function' ? e.title(this) : title, desc, options: opts.map((o) => ({ ...o, hint: typeof o.hint === 'function' ? o.hint(this) : o.hint })) };
+    const woke = this.s.hib && e.id !== 'hib-fault';
+    const desc = (woke ? '캡슐이 나를 깨웠어요. 몸이 덜 풀린 채로 경고등을 봐요. ' : '') + e.desc(this);
+    this.pending = { ev: e, woke, title: typeof e.title === 'function' ? e.title(this) : title, desc, options: opts.map((o) => ({ ...o, hint: typeof o.hint === 'function' ? o.hint(this) : o.hint })) };
     this.s.lastEventTau = this.s.tau; this.s.events++;
   }
   // 선택: 결과를 굴리고 효과를 적용한다
@@ -115,8 +119,9 @@ export class Voyage {
     this.pending = null;
     if (r.retry) { this._log(p.ev.cat, r.text); this.s.flags[p.ev.once] = false; return { text: r.text }; }
     this.apply(r);
-    const entry = { cat: p.ev.cat, title: p.title, choice: o.label, text: r.death || r.text };
-    this._log(p.ev.cat, `${p.title} — ${o.label}. ${r.death || r.text}`);
+    const back = p.woke && this.s.hib && !r.death && !r.arrived ? ' 다시 캡슐에 들어갔어요.' : '';
+    const entry = { cat: p.ev.cat, title: p.title, choice: o.label, text: (r.death || r.text) + back };
+    this._log(p.ev.cat, `${p.title} — ${o.label}. ${r.death || r.text}${back}`);
     if (r.death) this._die(r.death, true);
     if (r.arrived) this.s.arrived = true;
     return entry;
