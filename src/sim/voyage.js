@@ -10,7 +10,7 @@ const RTG_HALF_LIFE_Y = 87.7;                     // Pu-238
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const R = Math.random;
 // 동면 중에는 컴퓨터가 비상시에만 깨운다: 이 사건들만 온다
-const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
+const HIB_OK = new Set(['smoke', 'oga', 'oga-retry', 'water', 'water-retry', 'hib-offer2', 'power', 'blackout', 'micro', 'debris', 'dust', 'course', 'belt', 'jupiter', 'reentry', 'hib-fault', 'roguebh', 'ai', 'spe']);
 const startAU2 = (v) => v.s.startAU * v.s.startAU;
 // 동료 후보: 이름·역할. 배에 오를 때 정원-1 명을 뽑는다
 const MATES = [['서하린', '의사'], ['강민준', '기관사'], ['오지우', '항법사'], ['레나 오카포', '식물학자'], ['토마스 레예스', '통신사'], ['박도윤', '조종사'], ['아이샤 라만', '물리학자'], ['이수아', '정비사'], ['사토 유키', '심리상담사'], ['정하람', '요리사'], ['마테오 비앙키', '지질학자'], ['한세영', '간호사'], ['니콜라 페트로프', '전기기사'], ['최은우', '생물학자'], ['마리암 하다드', '천문학자']];
@@ -76,9 +76,9 @@ export class Voyage {
     s.tau += dt; s.aged = (s.aged || 0) + dt * (s.hib ? 0.15 : s.hibHalf ? 0.6 : 1); s.age = this.age0 + s.aged / YEAR;   // 동면 중엔 몸의 시계가 느리게 (시나리오)
     const r = this.rAU();
     // 보급: 식량(재배실이 절반을 댐), 물(재활용), 산소(발생기)
-    const hibF = s.hib ? 0.1 : s.hibHalf ? 0.55 : 1;            // 동면: 먹고 마시는 양 10분의 1 (시나리오)
+    const hibF = s.hib ? 0.05 : s.hibHalf ? 0.5 : 1;            // 동면: 먹고 마시는 양 20분의 1 (시나리오)
     const crewFrac = s.crewAlive / this.ship.crew * hibF;
-    s.food -= dd * crewFrac * (s.eco ? 0.5 : 1);
+    s.food -= dd * crewFrac * (s.eco ? 0.35 : 1);   // 재배실이 식량의 3분의 2를 댄다 (BIOS-3 수준, 시나리오)
     s.water -= dd * crewFrac * (s.recycler ? 1 - this.ship.recycle : 1);
     if (!s.oga) s.o2 -= dd * crewFrac;
     // 전력: 태양 전지판 ∝ 1/r², 동위원소 전지 반감기, 원자로는 일정
@@ -86,7 +86,7 @@ export class Voyage {
     else if (this.ship.power === 'rtg') s.power = Math.pow(0.5, s.tau / YEAR / RTG_HALF_LIFE_Y) * (1 - 0.004 * s.tau / YEAR); // 열전소자 노화 포함
     s.power = clamp(s.power, 0, 1);
     // 피폭: 은하우주선 (RAD 1.84 mSv/일) × 차폐. 태양권 밖은 1.3배 (보이저 CRS)
-    const gcr = DOSE_RATE_SV_PER_YEAR * (r > 120 ? 1.3 : 1) * this.ship.shield;
+    const gcr = DOSE_RATE_SV_PER_YEAR * (r > 120 ? 1.3 : 1) * this.ship.shield * (s.hib ? 0.5 : 1);   // 동면 캡슐은 물탱크 안쪽 (시나리오)
     const dD = gcr * dy; s.dose += dD;
     if (s.cancerAt == null && R() < FATAL_RISK_PER_SV * dD) s.cancerAt = s.tau + (5 + 15 * R()) * YEAR;  // ICRP 5.5 %/Sv, 잠복 5–20년
     // 사기: 긴 고립은 천천히 깎고, 사람이 많으면 덜 깎인다

@@ -67,6 +67,16 @@ export const EVENTS = [
   },
   // ---------- 물 ----------
   {
+    id: 'water-retry', cat: 'water', title: '물이 줄어요',
+    desc: (v) => `비축 물이 ${Math.max(0, Math.round(v.s.water))}일치 남았어요. 재활용기를 다시 살려야 해요.`,
+    src: 'ISS WPA 정비 이력; 식량 속 수분 회수',
+    when: (v) => !v.s.recycler && v.s.water < 45, rate: (v) => 24,
+    options: [
+      { label: '예비 부품 없이 다시 조립해 본다', hint: '세 번 중 두 번은 돌아요.', go: (v) => chance(0.7) ? { text: '이틀을 매달렸어요. 물이 다시 돌아요. 맛은 그대로예요.', recycler: true, delay: 2 * DAY } : { text: '펌프가 끝내 돌지 않았어요. 물이 더 줄어요.', water: -5 } },
+      { label: '공기 중 습기와 식량의 수분을 모은다', hint: '제습기와 식량 수분으로 하루 몇 컵. 식량이 줄어요.', go: (v) => ({ text: '제습 필터에서 하루 두 컵, 통조림 국물에서 한 컵. 버틸 만해요.', water: 40, food: -20, recycler: false }) },
+    ],
+  },
+  {
     id: 'water', cat: 'water', title: '물 재활용기가 멈췄어요',
     desc: (v) => `땀과 오줌을 다시 물로 만드는 장치예요. ISS 는 98 % 를 되돌려요. 비축 물은 ${Math.round(v.s.water)}일치.`,
     src: 'NASA ISS 물 회수 98 % (2023); ISS WPA 필터 교체 이력',
@@ -328,10 +338,20 @@ export const MILESTONES = [
 // ---------- SF 영화 같은 시나리오. 실제 기록이 아니라 상상이에요 (src 에 '시나리오'라고 표시). 결과는 역시 숨겨진 확률로. ----------
 export const SF_EVENTS = [
   {
+    id: 'hib-offer2', cat: 'sf', title: '식량이 길보다 짧아요',
+    desc: (v) => `남은 길 ${Math.round(v.remaining() / YEAR)}년, 식량 ${(v.s.food / 365.25).toFixed(1)}년치. 깨어서 가면 못 닿아요. 동면 캡슐은 비어 있어요.`,
+    src: SF('패신저스 (2016)'),
+    trigger: (v) => !v.s.hib && v.s.flags.hibOffered && !v.s.flags.hibOffered2 && v.remaining() > YEAR && v.s.food < v.remaining() / DAY * (v.s.eco ? 0.4 : 1), once: 'hibOffered2',
+    options: [
+      { label: '동면에 들어간다', hint: '컴퓨터가 비상시에만 깨워요.', go: (v) => ({ text: '뚜껑이 닫혔어요. 다음 기억은 경고등이거나, 지구예요.', hib: true }) },
+      { label: '식량을 반으로 줄이고 깨어서 간다', hint: '사람은 하루 1,000 kcal 로도 오래 버티지만 몸이 상해요.', go: (v) => ({ text: '배급을 반으로 줄였어요. 늘 배가 고파요.', food: v.s.food * 0.6, health: -0.15, morale: -0.1 }) },
+    ],
+  },
+  {
     id: 'hib-offer', cat: 'sf', title: '동면 장치',
-    desc: (v) => `이 배에는 동면 캡슐이 ${v.ship.crew}개 있어요. 들어가면 먹고 마시는 양이 10분의 1로 줄고 몸의 시계도 느려져요. 깨우는 건 컴퓨터예요.`,
+    desc: (v) => `이 배에는 동면 캡슐이 ${v.ship.crew}개 있어요. 들어가면 먹고 마시는 양이 20분의 1로 줄고 몸의 시계도 느려져요. 깨우는 건 컴퓨터예요. 남은 길은 ${Math.round(v.remaining() / YEAR)}년, 식량은 ${(v.s.food / 365.25).toFixed(1)}년치예요.`,
     src: SF('패신저스 (2016), 2001 스페이스 오디세이'),
-    trigger: (v) => v.ship.eco && v.s.tau > 10 * DAY && !v.s.flags.hibOffered, once: 'hibOffered',
+    trigger: (v) => v.s.tau > 10 * DAY && v.remaining() > 2 * YEAR && !v.s.flags.hibOffered, once: 'hibOffered',
     options: [
       { label: '동면에 들어간다', hint: '사건이 생기면 컴퓨터가 깨워요. 깨우지 못할 수도 있고요.', go: (v) => ({ text: '뚜껑이 닫히고 차가운 안개가 올라왔어요. 다음 기억은 없어요.', hib: true }) },
       { label: '깨어서 간다', hint: '시간은 그대로 흘러요.', go: (v) => ({ text: '캡슐은 비워 뒀어요. 창밖을 보며 가기로 했어요.', morale: 0.05 }) },

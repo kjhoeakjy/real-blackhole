@@ -170,7 +170,11 @@ export class TripMode {
   _wake() {
     this._weather().then((w) => { if (w && this.voy) this.voy.weather = w; });
     const list = this.starts();
-    this.from = list[Math.floor(Math.random() * list.length)].id;
+    // 출발지 추첨: 닿을 수 있는 곳이 더 자주 (태양계 55 %, 탐사선 곁 10 %, 별 27 %(가까운 별 위주), 블랙홀 4 %, 다른 은하 4 %)
+    const r = Math.random(), kind = r < 0.55 ? 'solar' : r < 0.65 ? 'probe' : r < 0.92 ? 'star' : r < 0.96 ? 'bh' : 'galaxy';
+    let pool = list.filter((d) => d.kind === kind);
+    if (kind === 'star' && Math.random() < 0.8) pool = pool.filter((d) => d.distPc < 8);
+    this.from = (pool.length ? pool : list)[Math.floor(Math.random() * (pool.length ? pool : list).length)].id;
     this._setupRoute();
     const { from, distM } = this.route;
     if (from.kind !== 'bh') { this.scene.classList.remove('hidden', 'lift'); this.sceneOn = true; this._drawScene(); }
